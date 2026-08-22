@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Modules.Users.IntegrationTests" />
+    <InternalsVisibleTo Include="Modules.Catalog.IntegrationTests" />
+    <InternalsVisibleTo Include="Modules.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Infrastructure\FlashSales.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Users\Modules.Users.Contracts\Modules.Users.Contracts.csproj" />
+    <ProjectReference Include="..\Modules.Catalog.Contracts\Modules.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\Modules.Catalog.Application\Modules.Catalog.Application.csproj" />
+    <ProjectReference Include="..\Modules.Catalog.Endpoints\Modules.Catalog.Endpoints.csproj" />
+  </ItemGroup>
+
+</Project>

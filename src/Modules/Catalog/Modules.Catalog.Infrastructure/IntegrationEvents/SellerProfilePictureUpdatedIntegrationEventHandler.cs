@@ -1,0 +1,28 @@
+using FlashSales.Application.Inbox;
+using FlashSales.Domain.DomainObjects;
+using MidR.Abstractions;
+using MidR.Interfaces;
+using Modules.Catalog.Application.Sellers.Features.UpdateProfilePicture;
+using Modules.Users.Contracts.IntegrationEvents;
+
+namespace Modules.Catalog.Infrastructure.IntegrationEvents
+{
+    [DirectQueue(InboxRoutes.Catalog)]
+    internal sealed class SellerProfilePictureUpdatedIntegrationEventHandler(
+        ISender sender
+        ) : INotificationHandler<SellerProfilePictureUpdatedIntegrationEvent>
+    {
+        public async Task ExecuteAsync(SellerProfilePictureUpdatedIntegrationEvent notification, CancellationToken cancellationToken)
+        {
+            var result = await sender.SendAsync(new UpdateSellerProfilePictureCommand(
+                notification.UserId,
+                notification.ProfilePictureUrl
+                ), cancellationToken);
+
+            if (result.IsFailure)
+            {
+                throw new FlashSalesException(nameof(UpdateSellerProfilePictureCommand), result.Error);
+            }
+        }
+    }
+}

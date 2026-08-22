@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Application\FlashSales.Application.csproj" />
+    <ProjectReference Include="..\Modules.Catalog.Domain\Modules.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\Modules.Catalog.Contracts\Modules.Catalog.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

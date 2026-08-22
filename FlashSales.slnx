@@ -1,0 +1,67 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/API/">
+    <Project Path="src/API/FlashSales.Api/FlashSales.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Building Blocks/">
+    <Project Path="src/BuildingBlocks/FlashSales.Application/FlashSales.Application.csproj" />
+    <Project Path="src/BuildingBlocks/FlashSales.Domain/FlashSales.Domain.csproj" />
+    <Project Path="src/BuildingBlocks/FlashSales.Endpoints/FlashSales.Endpoints.csproj" />
+    <Project Path="src/BuildingBlocks/FlashSales.Infrastructure/FlashSales.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/Modules.Catalog.Application/Modules.Catalog.Application.csproj" />
+    <Project Path="src/Modules/Catalog/Modules.Catalog.Contracts/Modules.Catalog.Contracts.csproj" Id="a8ff017d-9d55-47ac-9cb9-96106bdb2d31" />
+    <Project Path="src/Modules/Catalog/Modules.Catalog.Domain/Modules.Catalog.Domain.csproj" />
+    <Project Path="src/Modules/Catalog/Modules.Catalog.Endpoints/Modules.Catalog.Endpoints.csproj" />
+    <Project Path="src/Modules/Catalog/Modules.Catalog.Infrastructure/Modules.Catalog.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Launches/">
+    <Project Path="src/Modules/Launches/Modules.Launches.Application/Modules.Launches.Application.csproj" />
+    <Project Path="src/Modules/Launches/Modules.Launches.Contracts/Modules.Launches.Contracts.csproj" Id="fb795f63-7afc-4d43-b003-120c9de5e1b6" />
+    <Project Path="src/Modules/Launches/Modules.Launches.Domain/Modules.Launches.Domain.csproj" />
+    <Project Path="src/Modules/Launches/Modules.Launches.Endpoints/Modules.Launches.Endpoints.csproj" />
+    <Project Path="src/Modules/Launches/Modules.Launches.Infrastructure/Modules.Launches.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Orders/">
+    <Project Path="src/Modules/Orders/Modules.Orders.Application/Modules.Orders.Application.csproj" />
+    <Project Path="src/Modules/Orders/Modules.Orders.Contracts/Modules.Orders.Contracts.csproj" />
+    <Project Path="src/Modules/Orders/Modules.Orders.Domain/Modules.Orders.Domain.csproj" />
+    <Project Path="src/Modules/Orders/Modules.Orders.Endpoints/Modules.Orders.Endpoints.csproj" />
+    <Project Path="src/Modules/Orders/Modules.Orders.Infrastructure/Modules.Orders.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Payments/">
+    <Project Path="src/Modules/Payments/Modules.Payments.Application/Modules.Payments.Application.csproj" />
+    <Project Path="src/Modules/Payments/Modules.Payments.Contracts/Modules.Payments.Contracts.csproj" />
+    <Project Path="src/Modules/Payments/Modules.Payments.Domain/Modules.Payments.Domain.csproj" />
+    <Project Path="src/Modules/Payments/Modules.Payments.Endpoints/Modules.Payments.Endpoints.csproj" />
+    <Project Path="src/Modules/Payments/Modules.Payments.Infrastructure/Modules.Payments.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Users/">
+    <Project Path="src/Modules/Users/Modules.Users.Application/Modules.Users.Application.csproj" />
+    <Project Path="src/Modules/Users/Modules.Users.Contracts/Modules.Users.Contracts.csproj" />
+    <Project Path="src/Modules/Users/Modules.Users.Domain/Modules.Users.Domain.csproj" />
+    <Project Path="src/Modules/Users/Modules.Users.Endpoints/Modules.Users.Endpoints.csproj" />
+    <Project Path="src/Modules/Users/Modules.Users.Infrastructure/Modules.Users.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Modules/">
+    <Project Path="tests/Modules/Modules.IntegrationTests/Modules.IntegrationTests.csproj" Id="09c52455-a1f7-4381-9b0f-e16a0cf8e8a4" />
+  </Folder>
+  <Folder Name="/tests/Modules/Catalog/">
+    <Project Path="tests/Modules/Catalog/Modules.Catalog.IntegrationTests/Modules.Catalog.IntegrationTests.csproj" Id="89bcbb13-8926-49f8-9d08-90f3da52d763" />
+  </Folder>
+  <Folder Name="/tests/Modules/Launches/">
+    <Project Path="tests/Modules/Launches/Modules.Launches.IntegrationTests/Modules.Launches.IntegrationTests.csproj" Id="45b80365-00ac-4dcb-aba4-903bedaa5a1a" />
+  </Folder>
+  <Folder Name="/tests/Modules/Orders/">
+    <Project Path="tests/Modules/Orders/Modules.Orders.IntegrationTests/Modules.Orders.IntegrationTests.csproj" Id="c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f" />
+  </Folder>
+  <Folder Name="/tests/Modules/Payments/">
+    <Project Path="tests/Modules/Payments/Modules.Payments.IntegrationTests/Modules.Payments.IntegrationTests.csproj" Id="d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a" />
+  </Folder>
+  <Folder Name="/tests/Modules/Users/">
+    <Project Path="tests/Modules/Users/Modules.Users.IntegrationTests/Modules.Users.IntegrationTests.csproj" Id="d5ddb762-6cd8-4de7-8c3c-48ccdcc8c212" />
+  </Folder>
+</Solution>

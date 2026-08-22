@@ -1,0 +1,22 @@
+{
+  "UserConfig": {
+    "Namespaces": [
+      {
+        "Name": "sbemulatorns",
+        "Topics": [
+          {
+            "Name": "flash-sales.users.seller-activated",
+            "Subscriptions": [
+              {
+                "Name": "launches.sub"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "Logging": {
+      "Type": "Console"
+    }
+  }
+}

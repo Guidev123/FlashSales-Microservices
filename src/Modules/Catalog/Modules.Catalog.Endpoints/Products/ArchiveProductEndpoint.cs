@@ -1,0 +1,44 @@
+using FlashSales.Domain.Results;
+using FlashSales.Endpoints.Endpoints;
+using FlashSales.Endpoints.Results;
+using FlashSales.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using MidR.Interfaces;
+using Modules.Catalog.Application.Products.Features.Archive;
+using System.ComponentModel;
+using System.Security.Claims;
+
+namespace Modules.Catalog.Endpoints.Products
+{
+    internal sealed class ArchiveProductEndpoint : IEndpoint
+    {
+        public void MapEndpoint(IEndpointRouteBuilder app)
+        {
+            app.MapPut("api/v1/products/{id:guid}/archive", async (
+                [Description("Unique identifier of the product to archive (UUID).")] Guid id,
+                ISender sender,
+                ClaimsPrincipal claimsPrincipal,
+                CancellationToken cancellationToken
+                ) =>
+            {
+                var command = new ArchiveProductCommand(claimsPrincipal.GetUserId(), id);
+
+                var result = await sender.SendAsync(command, cancellationToken);
+
+                return result.Match(() => Results.NoContent(), ApiResults.Problem);
+            }).WithTags(EndpointsModule.Module)
+              .RequireAuthorization(CatalogPermissions.Products.ProductsArchive)
+              .WithSummary("Archive a product")
+              .WithDescription(
+                  "Transitions an Active product to Archived status, removing it from the customer-facing catalog. " +
+                  "Only the seller who owns the product can archive it. Archived products can be reactivated.")
+              .Produces(StatusCodes.Status204NoContent)
+              .ProducesProblem(StatusCodes.Status400BadRequest)
+              .ProducesProblem(StatusCodes.Status401Unauthorized)
+              .ProducesProblem(StatusCodes.Status403Forbidden)
+              .ProducesProblem(StatusCodes.Status404NotFound);
+        }
+    }
+}

@@ -1,0 +1,71 @@
+using Microsoft.EntityFrameworkCore;
+using Modules.Catalog.Domain.Products.Entities;
+using Modules.Catalog.Domain.Products.Repositories;
+
+namespace Modules.Catalog.Infrastructure.Database.Repositories
+{
+    internal sealed class ProductRepository(CatalogDbContext context) : IProductRepository
+    {
+        public void Add(Product product)
+        {
+            context.Products.Add(product);
+        }
+
+        public void AddCategory(Category category)
+        {
+            context.Categories.Add(category);
+        }
+
+        public void AddProductImage(ProductImage productImage)
+        {
+            context.ProductImages.Add(productImage);
+        }
+
+        public Task<bool> CategoryExistsAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return context.Categories.AnyAsync(c => c.Name == name, cancellationToken: cancellationToken);
+        }
+
+        public Task<List<Product>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return context.Products.ToListAsync(cancellationToken);
+        }
+
+        public Task<List<Category>> GetAllCategoriesAsync(CancellationToken cancellationToken = default)
+        {
+            return context.Categories.ToListAsync(cancellationToken);
+        }
+
+        public Task<Product?> GetAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return context.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        }
+
+        public void Update(Product product)
+        {
+            context.Products.Update(product);
+        }
+
+        public Task<Category?> GetCategoryByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return context.Categories.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+        }
+
+        public Task<Category?> GetCategoryByNameAsync(string name, CancellationToken cancellationToken = default)
+        {
+            return context.Categories.FirstOrDefaultAsync(c => c.Name == name, cancellationToken);
+        }
+
+        public Task<Product?> GetWithImagesAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        }
+
+        public void UpdateProductImage(ProductImage productImage)
+        {
+            context.ProductImages.Update(productImage);
+        }
+    }
+}

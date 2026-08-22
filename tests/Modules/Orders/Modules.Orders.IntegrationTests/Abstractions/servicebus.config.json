@@ -1,0 +1,62 @@
+{
+  "UserConfig": {
+    "Namespaces": [
+      {
+        "Name": "sbemulatorns",
+        "Topics": [
+          {
+            "Name": "flash-sales.launches.launch-activated",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          },
+          {
+            "Name": "flash-sales.launches.launch-ended",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          },
+          {
+            "Name": "flash-sales.launches.launch-cancelled",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          },
+          {
+            "Name": "flash-sales.payments.payment-completed",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          },
+          {
+            "Name": "flash-sales.payments.payment-failed",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          },
+          {
+            "Name": "flash-sales.payments.payment-refunded",
+            "Subscriptions": [
+              {
+                "Name": "orders.sub"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "Logging": {
+      "Type": "Console"
+    }
+  }
+}
