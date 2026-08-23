@@ -1,11 +1,11 @@
 using Dapper;
-using Modules.Launches.Application.Abstractions;
+using FlashSales.Application.Abstractions;
 using Modules.Launches.Application.Launches.Dtos;
 using Modules.Launches.Application.Launches.Services;
 
 namespace Modules.Launches.Infrastructure.Database.Repositories
 {
-    internal sealed class LaunchQueryService(ILaunchesUnitOfWork unitOfWork) : ILaunchQueryService
+    internal sealed class LaunchQueryService(IUnitOfWork unitOfWork) : ILaunchQueryService
     {
         public async Task<LaunchResponse?> GetByIdAsync(Guid launchId, CancellationToken cancellationToken = default)
         {

@@ -1,6 +1,6 @@
 ﻿using Dapper;
+using FlashSales.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Modules.Users.Application.Abstractions;
 using Modules.Users.Application.Users.Dtos;
 using Modules.Users.Application.Users.Features.GetSeller;
 using Modules.Users.Application.Users.Services;
@@ -9,7 +9,7 @@ namespace Modules.Users.Infrastructure.Database.Repositories
 {
     internal sealed class UserQueryService(
         UsersDbContext context,
-        IUsersUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork
         ) : IUserQueryService
     {
         public Task<UserResponse?> GetAsync(Guid userId, CancellationToken cancellationToken = default)

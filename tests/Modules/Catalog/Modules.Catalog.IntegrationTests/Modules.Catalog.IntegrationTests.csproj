@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Modules\Catalog\Modules.Catalog.Infrastructure\Modules.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Modules\Users\Modules.Users.Infrastructure\Modules.Users.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

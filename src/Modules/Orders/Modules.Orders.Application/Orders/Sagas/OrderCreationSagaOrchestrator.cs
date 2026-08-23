@@ -1,7 +1,6 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Domain.Results;
 using Modules.Launches.Contracts;
-using Modules.Orders.Application.Abstractions;
 using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Errors;
 using Modules.Orders.Domain.Orders.Models;
@@ -13,7 +12,7 @@ namespace Modules.Orders.Application.Orders.Sagas
     public sealed class OrderCreationSagaOrchestrator(
         IOrderRepository orderRepository,
         IOrderCreationSagaRepository sagaRepository,
-        IOrdersUnitOfWork unitOfWork,
+        IUnitOfWork unitOfWork,
         ILaunchesPublicApi launchesPublicApi,
         IPaymentsPublicApi paymentsPublicApi
         )

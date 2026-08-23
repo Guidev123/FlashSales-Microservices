@@ -1,3 +1,4 @@
+using FlashSales.Application.Abstractions;
 using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
@@ -8,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Modules.Users.Application;
-using Modules.Users.Application.Abstractions;
 using Modules.Users.Application.AccessManagement.Options;
 using Modules.Users.Application.AccessManagement.Services;
 using Modules.Users.Application.Users.Services;
@@ -59,7 +59,7 @@ namespace Modules.Users.Infrastructure
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
 
-            services.AddModuleUnitOfWork<IUsersUnitOfWork, UnitOfWork>(Assemblies);
+            services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IRoleQueryService, RoleQueryService>();
@@ -72,14 +72,14 @@ namespace Modules.Users.Infrastructure
 
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleOutbox<IUsersUnitOfWork>(configuration, "Users", Schemas.Users, Assemblies);
+            services.AddModuleOutbox<IUnitOfWork>(configuration, "Users", Schemas.Users);
             return services;
         }
 
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleInbox<IUsersUnitOfWork>(
-                configuration, "Users", Schemas.Users, Assembly.GetExecutingAssembly());
+            services.AddModuleInbox<IUnitOfWork>(
+                configuration, "Users", Schemas.Users);
             return services;
         }
 

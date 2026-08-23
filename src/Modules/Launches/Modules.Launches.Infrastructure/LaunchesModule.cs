@@ -1,10 +1,10 @@
+using FlashSales.Application.Abstractions;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Modules.Launches.Application.Abstractions;
 using Modules.Launches.Application.Launches.Services;
 using Modules.Launches.Contracts;
 using Modules.Launches.Domain.Launches.Repositories;
@@ -53,7 +53,7 @@ namespace Modules.Launches.Infrastructure
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
 
-            services.AddModuleUnitOfWork<ILaunchesUnitOfWork, UnitOfWork>(Assemblies);
+            services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<ILaunchRepository, LaunchRepository>();
             services.AddScoped<ISellerRepository, SellerRepository>();
             services.AddScoped<ILaunchQueryService, LaunchQueryService>();
@@ -63,14 +63,14 @@ namespace Modules.Launches.Infrastructure
 
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleOutbox<ILaunchesUnitOfWork>(configuration, "Launches", Schemas.Launches, Assemblies);
+            services.AddModuleOutbox<IUnitOfWork>(configuration, "Launches", Schemas.Launches);
             return services;
         }
 
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleInbox<ILaunchesUnitOfWork>(
-                configuration, "Launches", Schemas.Launches, Assembly.GetExecutingAssembly(),
+            services.AddModuleInbox<IUnitOfWork>(
+                configuration, "Launches", Schemas.Launches,
                 Users.Contracts.IntegrationEvents.Topics.SellerActivated,
                 Users.Contracts.IntegrationEvents.Topics.UserProfileUpdated,
                 Users.Contracts.IntegrationEvents.Topics.SellerProfilePictureUpdated);

@@ -1,13 +1,13 @@
 ﻿using Dapper;
+using FlashSales.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Modules.Catalog.Application.Abstractions;
 using Modules.Catalog.Application.Products.Dtos;
 using Modules.Catalog.Application.Products.Services;
 
 namespace Modules.Catalog.Infrastructure.Database.Repositories
 {
     internal sealed class ProductQueryService(
-        ICatalogUnitOfWork unitOfWork,
+        IUnitOfWork unitOfWork,
         CatalogDbContext context
         ) : IProductQueryService
     {

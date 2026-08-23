@@ -1,7 +1,6 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
-using Modules.Launches.Application.Abstractions;
 using Modules.Launches.Domain.Launches.Enums;
 using Modules.Launches.Domain.Launches.Errors;
 using Modules.Launches.Domain.Launches.Repositories;
@@ -10,7 +9,7 @@ namespace Modules.Launches.Application.Launches.Features.ReserveStock
 {
     internal sealed class ReserveStockCommandHandler(
         ILaunchRepository launchRepository,
-        ILaunchesUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork
         ) : ICommandHandler<ReserveStockCommand>
     {
         private const int MaxRetryAttempts = 3;

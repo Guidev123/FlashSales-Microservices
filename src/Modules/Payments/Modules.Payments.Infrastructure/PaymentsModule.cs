@@ -1,10 +1,10 @@
+using FlashSales.Application.Abstractions;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Modules.Payments.Application.Abstractions;
 using Modules.Payments.Application.Payments;
 using Modules.Payments.Application.Payments.Services;
 using Modules.Payments.Contracts;
@@ -55,7 +55,7 @@ namespace Modules.Payments.Infrastructure
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
 
-            services.AddModuleUnitOfWork<IPaymentsUnitOfWork, UnitOfWork>(Assemblies);
+            services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             return services;
@@ -63,14 +63,14 @@ namespace Modules.Payments.Infrastructure
 
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleOutbox<IPaymentsUnitOfWork>(configuration, "Payments", Schemas.Payments, Assemblies);
+            services.AddModuleOutbox<IUnitOfWork>(configuration, "Payments", Schemas.Payments);
             return services;
         }
 
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleInbox<IPaymentsUnitOfWork>(
-                configuration, "Payments", Schemas.Payments, Assembly.GetExecutingAssembly());
+            services.AddModuleInbox<IUnitOfWork>(
+                configuration, "Payments", Schemas.Payments);
             return services;
         }
 

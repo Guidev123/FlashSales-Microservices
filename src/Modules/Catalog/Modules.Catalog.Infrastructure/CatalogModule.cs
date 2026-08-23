@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.Catalog.Application;
-using Modules.Catalog.Application.Abstractions;
 using Modules.Catalog.Application.Products.Services;
 using Modules.Catalog.Contracts;
 using Modules.Catalog.Domain.Products.Repositories;
@@ -52,7 +51,7 @@ namespace Modules.Catalog.Infrastructure
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
 
-            services.AddModuleUnitOfWork<ICatalogUnitOfWork, UnitOfWork>(Assemblies);
+            services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<ISellerRepository, SellerRepository>();
             services.AddScoped<IProductQueryService, ProductQueryService>();
@@ -62,14 +61,14 @@ namespace Modules.Catalog.Infrastructure
 
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleOutbox<ICatalogUnitOfWork>(configuration, "Catalog", Schemas.Catalog, Assemblies);
+            services.AddModuleOutbox<IUnitOfWork>(configuration, "Catalog", Schemas.Catalog);
             return services;
         }
 
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleInbox<ICatalogUnitOfWork>(
-                configuration, "Catalog", Schemas.Catalog, Assembly.GetExecutingAssembly(),
+            services.AddModuleInbox<IUnitOfWork>(
+                configuration, "Catalog", Schemas.Catalog,
                 Users.Contracts.IntegrationEvents.Topics.SellerActivated,
                 Users.Contracts.IntegrationEvents.Topics.SellerProfilePictureUpdated,
                 Users.Contracts.IntegrationEvents.Topics.UserProfileUpdated);

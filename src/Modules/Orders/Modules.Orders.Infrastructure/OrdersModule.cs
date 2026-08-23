@@ -1,10 +1,10 @@
+using FlashSales.Application.Abstractions;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Modules.Orders.Application.Abstractions;
 using Modules.Orders.Application.Orders.Sagas;
 using Modules.Orders.Application.Orders.Services;
 using Modules.Orders.Domain.Launches.Repositories;
@@ -53,7 +53,7 @@ namespace Modules.Orders.Infrastructure
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
 
-            services.AddModuleUnitOfWork<IOrdersUnitOfWork, UnitOfWork>(Assemblies);
+            services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ILaunchRepository, LaunchRepository>();
             services.AddScoped<IOrderCreationSagaRepository, OrderCreationSagaRepository>();
@@ -64,14 +64,14 @@ namespace Modules.Orders.Infrastructure
 
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleOutbox<IOrdersUnitOfWork>(configuration, "Orders", Schemas.Orders, Assemblies);
+            services.AddModuleOutbox<IUnitOfWork>(configuration, "Orders", Schemas.Orders);
             return services;
         }
 
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModuleInbox<IOrdersUnitOfWork>(
-                configuration, "Orders", Schemas.Orders, Assembly.GetExecutingAssembly(),
+            services.AddModuleInbox<IUnitOfWork>(
+                configuration, "Orders", Schemas.Orders,
                 Launches.Contracts.IntegrationEvents.Topics.LaunchActivated,
                 Launches.Contracts.IntegrationEvents.Topics.LaunchEnded,
                 Launches.Contracts.IntegrationEvents.Topics.LaunchCancelled,

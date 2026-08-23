@@ -1,14 +1,14 @@
 using Dapper;
+using FlashSales.Application.Abstractions;
 using FlashSales.Domain.Results;
 using FlashSales.Infrastructure.Extensions;
-using Modules.Users.Application.Abstractions;
 using Modules.Users.Domain.AccessManagement.Models;
 using Modules.Users.Domain.AccessManagement.Repositories;
 using Modules.Users.Domain.Users.Enum;
 
 namespace Modules.Users.Infrastructure.Database.Repositories
 {
-    internal sealed class RoleRepository(IUsersUnitOfWork unitOfWork) : IRoleRepository
+    internal sealed class RoleRepository(IUnitOfWork unitOfWork) : IRoleRepository
     {
 
         public Task AddAsync(Role role, CancellationToken cancellationToken = default)

@@ -1,7 +1,5 @@
 ﻿using FlashSales.Domain.DomainObjects;
 using FlashSales.Infrastructure.Extensions;
-using FlashSales.Infrastructure.Inbox;
-using FlashSales.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using Modules.Catalog.Domain.Products.Entities;
 using Modules.Catalog.Domain.Sellers.Entities;

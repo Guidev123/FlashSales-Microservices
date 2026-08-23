@@ -10,8 +10,8 @@ namespace FlashSales.Application.Behaviors
 {
     public sealed class RequestTransactionBehavior<TRequest, TResponse>(
          IDomainEventCollector domainEventCollector,
-         IUnitOfWorkFactory unitOfWorkFactory,
-         IOutboxRepositoryFactory outboxRepositoryFactory,
+         IUnitOfWork unitOfWork,
+         IOutboxRepository outboxRepository,
          ILogger<RequestTransactionBehavior<TRequest, TResponse>> logger
      ) : IRequestBehavior<TRequest, TResponse>
          where TRequest : IRequest<TResponse>, IBaseCommand
@@ -27,8 +27,6 @@ namespace FlashSales.Application.Behaviors
             CancellationToken cancellationToken)
         {
             if (request is ITransactionalLessCommand) return await next();
-
-            var unitOfWork = unitOfWorkFactory.Create(typeof(TRequest));
 
             var isOutermost = await BeginTransactionAsync(unitOfWork, cancellationToken);
 
@@ -88,8 +86,6 @@ namespace FlashSales.Application.Behaviors
             }
 
             var events = domainEventCollector.Flush();
-
-            var outboxRepository = outboxRepositoryFactory.Create(typeof(TRequest));
 
             foreach (var domainEvent in events)
             {

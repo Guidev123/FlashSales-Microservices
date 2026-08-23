@@ -1,11 +1,11 @@
 using Dapper;
-using Modules.Orders.Application.Abstractions;
+using FlashSales.Application.Abstractions;
 using Modules.Orders.Application.Orders.Dtos;
 using Modules.Orders.Application.Orders.Services;
 
 namespace Modules.Orders.Infrastructure.Database.Repositories
 {
-    internal sealed class OrderQueryService(IOrdersUnitOfWork unitOfWork) : IOrderQueryService
+    internal sealed class OrderQueryService(IUnitOfWork unitOfWork) : IOrderQueryService
     {
         public async Task<OrderResponse?> GetByIdAsync(Guid orderId, Guid customerId, CancellationToken cancellationToken = default)
         {

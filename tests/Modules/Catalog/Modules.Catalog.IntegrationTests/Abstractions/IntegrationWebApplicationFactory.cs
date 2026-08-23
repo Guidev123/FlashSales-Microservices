@@ -43,6 +43,7 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseContentRoot(AppContext.BaseDirectory);
             builder.UseSetting("ConnectionStrings:Postgres", _postgresContainer.GetConnectionString());
             builder.UseSetting("BlobStorage:ConnectionString", _azuriteContainer.GetConnectionString());
             builder.UseSetting("Authentication:MetadataAddress",

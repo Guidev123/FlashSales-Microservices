@@ -1,13 +1,13 @@
 ﻿using Dapper;
+using FlashSales.Application.Abstractions;
 using FlashSales.Infrastructure.Extensions;
-using Modules.Users.Application.Abstractions;
 using Modules.Users.Application.AccessManagement.Features.GetPermissions;
 using Modules.Users.Application.AccessManagement.Features.GetRole;
 using Modules.Users.Application.AccessManagement.Services;
 
 namespace Modules.Users.Infrastructure.Database.Repositories
 {
-    internal sealed class RoleQueryService(IUsersUnitOfWork unitOfWork) : IRoleQueryService
+    internal sealed class RoleQueryService(IUnitOfWork unitOfWork) : IRoleQueryService
     {
 
         public async Task<GetRoleResponse?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
