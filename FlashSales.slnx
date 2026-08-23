@@ -1,7 +1,12 @@
 <Solution>
   <Folder Name="/src/" />
-  <Folder Name="/src/API/">
-    <Project Path="src/API/FlashSales.Api/FlashSales.Api.csproj" />
+  <Folder Name="/src/Apps/" />
+  <Folder Name="/src/Apps/APIs/">
+    <Project Path="src/Apps/APIs/FlashSales.Catalog.Api/FlashSales.Catalog.Api.csproj" Id="aec6e250-013b-4cee-ad44-9b7bad71c77e" />
+    <Project Path="src/Apps/APIs/FlashSales.Launches.Api/FlashSales.Launches.Api.csproj" Id="d479c383-35e5-4355-bac6-c198df43c539" />
+    <Project Path="src/Apps/APIs/FlashSales.Orders.Api/FlashSales.Orders.Api.csproj" Id="9c45b691-adf4-4820-87cd-e73bcb719ff3" />
+    <Project Path="src/Apps/APIs/FlashSales.Payments.Api/FlashSales.Payments.Api.csproj" Id="a4752025-dfdc-435b-bd8d-283cf5d54e5d" />
+    <Project Path="src/Apps/APIs/FlashSales.Users.Api/FlashSales.Users.Api.csproj" Id="67724a5c-57dc-457b-92b7-0b9e91c6d8fb" />
   </Folder>
   <Folder Name="/src/Building Blocks/">
     <Project Path="src/BuildingBlocks/FlashSales.Application/FlashSales.Application.csproj" />

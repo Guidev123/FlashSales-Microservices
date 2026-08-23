@@ -368,3 +368,8 @@ FodyWeavers.xsd
 /src/API/FlashSales.Api/modules.launches.Development.json
 /src/API/FlashSales.Api/modules.payments.Development.json
 /src/API/FlashSales.Api/modules.orders.Development.json
+/src/Apps/APIs/FlashSales.Users.Api/appsettings.Development.json
+/src/Apps/APIs/FlashSales.Payments.Api/appsettings.Development.json
+/src/Apps/APIs/FlashSales.Orders.Api/appsettings.Development.json
+/src/Apps/APIs/FlashSales.Launches.Api/appsettings.Development.json
+/src/Apps/APIs/FlashSales.Catalog.Api/appsettings.Development.json

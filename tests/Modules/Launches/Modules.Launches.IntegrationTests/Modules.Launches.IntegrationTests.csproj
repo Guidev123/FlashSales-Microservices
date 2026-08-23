@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\API\FlashSales.Api\FlashSales.Api.csproj" />
     <ProjectReference Include="..\..\..\..\src\Modules\Launches\Modules.Launches.Infrastructure\Modules.Launches.Infrastructure.csproj" />
   </ItemGroup>
 
