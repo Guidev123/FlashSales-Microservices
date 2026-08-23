@@ -27,7 +27,7 @@ namespace FlashSales.Infrastructure.Http
         }
     }
 
-    public sealed record HttpResilienceOptions
+    public record HttpResilienceOptions
     {
         private static readonly double _failureRatio = 0.9;
         private static readonly int _maxRetriesAttempts = 3;

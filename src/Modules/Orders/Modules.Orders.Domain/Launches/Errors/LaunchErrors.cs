@@ -19,5 +19,15 @@ namespace Modules.Orders.Domain.Launches.Errors
         public static readonly Error TitleRequired = Error.Invalid(
             "Launches.TitleRequired",
             "Title must not be empty");
+
+        public static Error FailToReleaseStockForOrder(Guid orderId, Guid launchId)
+            => Error.Conflict(
+                "Launches.FailToReleaseStockForOrder",
+                $"Fail to release stock for order {orderId} and launch {launchId}");
+
+        public static Error FailToReserveStockForOrder(Guid orderId, Guid launchId)
+            => Error.Conflict(
+                "Launches.FailToReserveStockForOrder",
+                $"Fail to reserve stock for order {orderId} and launch {launchId}");
     }
 }

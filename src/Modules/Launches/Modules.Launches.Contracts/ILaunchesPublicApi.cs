@@ -5,17 +5,25 @@ namespace Modules.Launches.Contracts
     public interface ILaunchesPublicApi
     {
         Task<Result> ReserveAsync(
-            Guid launchId,
-            int quantity,
-            Guid orderId,
+            ReserveLaunchRequest request,
             CancellationToken cancellationToken = default
             );
 
+        public sealed record ReserveLaunchRequest(
+            Guid LaunchId,
+            int Quantity,
+            Guid OrderId
+            );
+
         Task<Result> ReleaseAsync(
-            Guid launchId,
-            int quantity,
-            Guid orderId,
+            ReleaseLaunchRequest request,
             CancellationToken cancellationToken = default
+            );
+
+        public sealed record ReleaseLaunchRequest(
+            Guid LaunchId,
+            int Quantity,
+            Guid OrderId
             );
     }
 }

@@ -37,7 +37,7 @@ namespace Modules.Orders.Application.Orders.Sagas
                     : OrderErrors.ReservationFailed);
             }
 
-            var reserveResult = await launchesPublicApi.ReserveAsync(order.LaunchId, order.Quantity, order.Id, cancellationToken);
+            var reserveResult = await launchesPublicApi.ReserveAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
             if (reserveResult.IsFailure)
             {
                 saga.Fail($"Failed to reserve stock: {reserveResult.Error!.Description}");
@@ -110,7 +110,7 @@ namespace Modules.Orders.Application.Orders.Sagas
                 sagaRepository.Update(saga);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                await launchesPublicApi.ReleaseAsync(order.LaunchId, order.Quantity, order.Id, cancellationToken);
+                await launchesPublicApi.ReleaseAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
 
                 saga.MarkCompensated();
             }

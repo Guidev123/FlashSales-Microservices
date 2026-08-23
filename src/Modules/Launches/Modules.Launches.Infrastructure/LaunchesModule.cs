@@ -6,14 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.Launches.Application.Launches.Services;
-using Modules.Launches.Contracts;
 using Modules.Launches.Domain.Launches.Repositories;
 using Modules.Launches.Domain.Sellers.Repositories;
 using Modules.Launches.Endpoints;
 using Modules.Launches.Infrastructure.Database;
 using Modules.Launches.Infrastructure.Database.Repositories;
 using Modules.Launches.Infrastructure.Jobs;
-using Modules.Launches.Infrastructure.PublicApi;
 using System.Reflection;
 
 namespace Modules.Launches.Infrastructure
@@ -36,8 +34,7 @@ namespace Modules.Launches.Infrastructure
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
-                .AddJobs(configuration)
-                .AddPublicApi();
+                .AddJobs(configuration);
 
             return services;
         }
@@ -88,13 +85,6 @@ namespace Modules.Launches.Infrastructure
             services.Configure<LaunchesJobsOptions>(configuration.GetSection(LaunchesJobsOptions.SectionName));
             services.AddHostedService<LaunchActivatorJob>();
             services.AddHostedService<LaunchEnderJob>();
-            return services;
-        }
-
-        private static IServiceCollection AddPublicApi(this IServiceCollection services)
-        {
-            services.AddTransient<ILaunchesPublicApi, LaunchesPublicApi>();
-
             return services;
         }
     }

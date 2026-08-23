@@ -1,10 +1,15 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Endpoints.Endpoints;
+using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
+using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Modules.Launches.Contracts;
+using Modules.Orders.Application;
 using Modules.Orders.Application.Orders.Sagas;
 using Modules.Orders.Application.Orders.Services;
 using Modules.Orders.Domain.Launches.Repositories;
@@ -13,6 +18,8 @@ using Modules.Orders.Endpoints;
 using Modules.Orders.Infrastructure.Database;
 using Modules.Orders.Infrastructure.Database.Repositories;
 using Modules.Orders.Infrastructure.Jobs;
+using Modules.Orders.Infrastructure.Options;
+using Modules.Orders.Infrastructure.Services;
 using System.Reflection;
 
 namespace Modules.Orders.Infrastructure
@@ -21,22 +28,20 @@ namespace Modules.Orders.Infrastructure
     {
         public static readonly Assembly[] Assemblies =
         [
-            Application.AssemblyReference.Assembly,
-            Domain.AssemblyReference.Assembly,
-            Contracts.AssemblyReference.Assembly,
-            Assembly.GetExecutingAssembly(),
-            Launches.Contracts.AssemblyReference.Assembly,
-            Payments.Contracts.AssemblyReference.Assembly,
+            typeof(OrdersModule).Assembly,
+            typeof(Application.AssemblyReference).Assembly,
         ];
 
         public static IServiceCollection AddOrdersModule(this IServiceCollection services, IConfiguration configuration)
         {
             services
+                .AddInfrastructureModule(configuration, Assemblies)
                 .AddData(configuration)
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
                 .AddJobs(configuration)
+                .AddApiServices(configuration)
                 .AddSagasOrchestrators();
 
             return services;
@@ -98,6 +103,24 @@ namespace Modules.Orders.Infrastructure
         private static IServiceCollection AddSagasOrchestrators(this IServiceCollection services)
         {
             services.AddScoped<OrderCreationSagaOrchestrator>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
+                ?? throw new NullReferenceException();
+
+            services.AddHttpClient<ILaunchesPublicApi, LaunchesApiService>(client =>
+            {
+                client.BaseAddress = new Uri(options.LaunchesApi.BaseUrl);
+            }).ConfigurePrimaryHttpMessageHandler(HttpMessageHandlerFactory.CreateSocketsHttpHandler)
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
+            .AddResilienceHandler(nameof(ResiliencePipelineExtensions), (pipeline, context) =>
+            {
+                pipeline.ConfigureResilience(options.LaunchesApi);
+            });
 
             return services;
         }

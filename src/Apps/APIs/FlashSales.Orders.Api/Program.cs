@@ -1,14 +1,11 @@
 using FlashSales.Endpoints.Endpoints;
-using FlashSales.Infrastructure;
 using Modules.Orders.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services
-    .AddInfrastructureModule(builder.Configuration, OrdersModule.Assemblies)
-    .AddOrdersModule(builder.Configuration);
+builder.Services.AddOrdersModule(builder.Configuration);
 
 var app = builder.Build();
 
