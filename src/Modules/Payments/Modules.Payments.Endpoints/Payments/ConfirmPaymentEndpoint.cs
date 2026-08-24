@@ -54,7 +54,8 @@ namespace Modules.Payments.Endpoints.Payments
                   "payment status. This endpoint is called by Stripe, not by application clients.")
               .Produces(StatusCodes.Status200OK)
               .ProducesProblem(StatusCodes.Status400BadRequest)
-              .ProducesProblem(StatusCodes.Status404NotFound);
+              .ProducesProblem(StatusCodes.Status404NotFound)
+              .AllowAnonymous();
         }
     }
 }

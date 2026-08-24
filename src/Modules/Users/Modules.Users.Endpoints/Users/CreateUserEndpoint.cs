@@ -28,7 +28,8 @@ namespace Modules.Users.Endpoints.Users
                   "Returns the new user's internal ID, identity-provider ID, and email address.")
               .Produces<CreateUserResponse>(StatusCodes.Status201Created)
               .ProducesProblem(StatusCodes.Status400BadRequest)
-              .ProducesProblem(StatusCodes.Status409Conflict);
+              .ProducesProblem(StatusCodes.Status409Conflict)
+              .AllowAnonymous();
         }
     }
 }

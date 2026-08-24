@@ -4,5 +4,6 @@
     {
         public string BaseUrl { get; set; } = default!;
         public string Scope { get; set; } = default!;
+        public string? Audience { get; set; }
     }
 }

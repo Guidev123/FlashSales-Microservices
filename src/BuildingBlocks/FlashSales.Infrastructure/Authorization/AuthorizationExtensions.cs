@@ -11,6 +11,7 @@ namespace FlashSales.Infrastructure.Authorization
             services.AddTransient<IClaimsTransformation, CustomClaimsTransformation>();
 
             services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddTransient<IAuthorizationHandler, ScopeAuthorizationHandler>();
 
             services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 

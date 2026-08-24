@@ -1,43 +1,30 @@
 ﻿using FlashSales.Domain.Results;
+using FlashSales.Infrastructure.Extensions;
+using Microsoft.Extensions.Logging;
 using Modules.Launches.Contracts;
-using Modules.Orders.Domain.Launches.Errors;
 using System.Net.Http.Json;
 using static Modules.Launches.Contracts.ILaunchesPublicApi;
 
 namespace Modules.Orders.Infrastructure.Services
 {
-    internal sealed class LaunchesApiService(HttpClient client) : ILaunchesPublicApi
+    internal sealed class LaunchesApiService(HttpClient client, ILogger<LaunchesApiService> logger) : ILaunchesPublicApi
     {
-        public async Task<Result> ReleaseAsync(ReleaseLaunchRequest request, CancellationToken cancellationToken = default)
+        public Task<Result> ReleaseAsync(ReleaseLaunchRequest request, CancellationToken cancellationToken = default)
         {
-            var response = await client.PostAsJsonAsync(
+            return client.PostAsJsonAsync(
                 $"api/v1/launches/{request.LaunchId}/stock/release",
                 request,
                 cancellationToken
-                );
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return Result.Failure(LaunchErrors.FailToReleaseStockForOrder(request.OrderId, request.LaunchId));
-            }
-
-            return Result.Success();
+                ).ToResultAsync(logger, ct: cancellationToken);
         }
 
-        public async Task<Result> ReserveAsync(ReserveLaunchRequest request, CancellationToken cancellationToken = default)
+        public Task<Result> ReserveAsync(ReserveLaunchRequest request, CancellationToken cancellationToken = default)
         {
-            var response = await client.PostAsJsonAsync(
+            return client.PostAsJsonAsync(
                 $"api/v1/launches/{request.LaunchId}/stock/reserve",
                 request,
                 cancellationToken
-                );
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return Result.Failure(LaunchErrors.FailToReserveStockForOrder(request.OrderId, request.LaunchId));
-            }
-
-            return Result.Success();
+                ).ToResultAsync(logger, ct: cancellationToken);
         }
     }
 }

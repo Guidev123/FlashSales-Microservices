@@ -2,7 +2,7 @@
 {
     internal sealed class KeyCloakOptions
     {
-        public const string SectionName = "Users:KeyCloak";
+        public const string SectionName = "KeyCloak";
 
         public string AdminUrl { get; set; } = string.Empty;
         public string CurrentRealm { get; set; } = string.Empty;

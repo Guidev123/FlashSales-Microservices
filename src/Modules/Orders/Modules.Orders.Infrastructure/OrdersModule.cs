@@ -112,15 +112,7 @@ namespace Modules.Orders.Infrastructure
             var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
                 ?? throw new NullReferenceException();
 
-            services.AddHttpClient<ILaunchesPublicApi, LaunchesApiService>(client =>
-            {
-                client.BaseAddress = new Uri(options.LaunchesApi.BaseUrl);
-            }).ConfigurePrimaryHttpMessageHandler(HttpMessageHandlerFactory.CreateSocketsHttpHandler)
-            .SetHandlerLifetime(Timeout.InfiniteTimeSpan)
-            .AddResilienceHandler(nameof(ResiliencePipelineExtensions), (pipeline, context) =>
-            {
-                pipeline.ConfigureResilience(options.LaunchesApi);
-            });
+            services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
 
             return services;
         }

@@ -31,7 +31,8 @@ namespace Modules.Launches.Endpoints.Launches
             })
             .WithTags(EndpointsModule.Module)
             .WithSummary("List launches with optional filters")
-            .Produces<PagedResult<LaunchResponse>>(StatusCodes.Status200OK);
+            .Produces<PagedResult<LaunchResponse>>(StatusCodes.Status200OK)
+            .AllowAnonymous();
         }
     }
 }

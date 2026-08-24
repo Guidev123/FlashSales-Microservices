@@ -1,7 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FlashSales.Infrastructure.Authentication
 {
@@ -10,7 +8,12 @@ namespace FlashSales.Infrastructure.Authentication
         internal static IServiceCollection AddAuthenticationInternal(this IServiceCollection services)
         {
             services.AddAuthentication().AddJwtBearer();
-            services.AddAuthorization();
+            services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
 
             services.AddHttpContextAccessor();
 

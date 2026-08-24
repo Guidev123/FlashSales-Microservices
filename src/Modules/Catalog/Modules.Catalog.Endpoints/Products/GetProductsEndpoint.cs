@@ -28,7 +28,8 @@ namespace Modules.Catalog.Endpoints.Products
             }).WithTags(EndpointsModule.Module)
               .WithSummary("List all active products")
               .WithDescription("Returns a paginated list of all active products in the catalog, including their images and category.")
-              .Produces<PagedResult<ProductResponse>>(StatusCodes.Status200OK);
+              .Produces<PagedResult<ProductResponse>>(StatusCodes.Status200OK)
+              .AllowAnonymous();
         }
     }
 }

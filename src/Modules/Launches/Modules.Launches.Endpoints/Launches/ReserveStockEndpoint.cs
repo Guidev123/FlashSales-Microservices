@@ -27,7 +27,7 @@ namespace Modules.Launches.Endpoints.Launches
                     ), cancellationToken);
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-            .RequireAuthorization();
+            .RequireScope(LaunchesScopes.StockManagement);
         }
 
         record ReserveStockRequest(

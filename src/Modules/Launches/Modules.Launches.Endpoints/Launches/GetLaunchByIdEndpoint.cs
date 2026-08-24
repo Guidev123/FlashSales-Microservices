@@ -26,7 +26,8 @@ namespace Modules.Launches.Endpoints.Launches
             .WithTags(EndpointsModule.Module)
             .WithSummary("Get launch by Id")
             .Produces<LaunchResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status404NotFound);
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .AllowAnonymous();
         }
     }
 }

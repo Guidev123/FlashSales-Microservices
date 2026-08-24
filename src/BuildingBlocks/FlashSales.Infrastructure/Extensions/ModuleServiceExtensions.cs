@@ -37,7 +37,7 @@ namespace FlashSales.Infrastructure.Extensions
                 sp.GetRequiredService<ModuleOutboxRepository<TUnitOfWork>>());
 
             services.Configure<OutboxOptions>(moduleName,
-                configuration.GetSection($"{moduleName}:{OutboxOptions.SectionName}"));
+                configuration.GetSection(OutboxOptions.SectionName));
 
             services.AddSingleton<ModuleOutboxProcessor<TUnitOfWork>>(sp =>
                 new ModuleOutboxProcessor<TUnitOfWork>(
@@ -70,7 +70,7 @@ namespace FlashSales.Infrastructure.Extensions
                 sp.GetRequiredService<ModuleInboxRepository<TUnitOfWork>>());
 
             services.Configure<InboxOptions>(moduleName,
-                configuration.GetSection($"{moduleName}:{InboxOptions.SectionName}"));
+                configuration.GetSection(InboxOptions.SectionName));
 
             services.AddSingleton<ModuleInboxProcessor<TUnitOfWork>>(sp =>
                 new ModuleInboxProcessor<TUnitOfWork>(

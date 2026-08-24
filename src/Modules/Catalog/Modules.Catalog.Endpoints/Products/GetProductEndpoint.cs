@@ -27,7 +27,8 @@ namespace Modules.Catalog.Endpoints.Products
               .WithSummary("Get a product by ID")
               .WithDescription("Returns the full details of a single product including images and category.")
               .Produces<ProductResponse>(StatusCodes.Status200OK)
-              .ProducesProblem(StatusCodes.Status404NotFound);
+              .ProducesProblem(StatusCodes.Status404NotFound)
+              .AllowAnonymous();
         }
     }
 }

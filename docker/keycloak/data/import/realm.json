@@ -124,6 +124,268 @@
     ],
     "client": {}
   },
+  "clients": [
+    {
+      "id": "b2c3d4e5-1000-1000-1000-000000000001",
+      "clientId": "flash-sales-public",
+      "name": "FlashSales Web App",
+      "description": "SPA frontend. Public client, calls every microservice directly on behalf of a signed-in user.",
+      "rootUrl": "http://localhost:3000",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email"],
+      "optionalClientScopes": ["offline_access", "address", "phone", "microprofile-jwt", "organization"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000101",
+          "name": "birth_date",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "birth_date",
+            "claim.name": "birth_date",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000102",
+          "name": "activated",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "activated",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000103",
+          "name": "customer",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "customer",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000104",
+          "name": "seller",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "seller",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000105",
+          "name": "audience-catalog",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-catalog",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000106",
+          "name": "audience-launches",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-launches",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000107",
+          "name": "audience-orders",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-orders",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000108",
+          "name": "audience-payments",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-payments",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000109",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000001",
+      "clientId": "flash-sales-catalog",
+      "name": "Catalog API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000002",
+      "clientId": "flash-sales-launches",
+      "name": "Launches API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000003",
+      "clientId": "flash-sales-orders",
+      "name": "Orders API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000004",
+      "clientId": "flash-sales-payments",
+      "name": "Payments API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000005",
+      "clientId": "flash-sales-users",
+      "name": "Users API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-3000-3000-3000-000000000001",
+      "clientId": "flash-sales-orders-svc",
+      "name": "Orders service account",
+      "description": "Confidential client used only by the Orders service (client_credentials) to call other microservices. Never used by a human.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-orders-svc-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": ["launches.stock.write"]
+    },
+    {
+      "id": "b2c3d4e5-3000-3000-3000-000000000002",
+      "clientId": "flash-sales-users-admin",
+      "name": "Users service — Keycloak admin",
+      "description": "Confidential client used only by the Users service to call the Keycloak Admin REST API (create users, set attributes, assign roles). The sole holder of manage-users/view-users in this realm.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-users-admin-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": []
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-flash-sales-users-admin",
+      "enabled": true,
+      "serviceAccountClientId": "flash-sales-users-admin",
+      "clientRoles": {
+        "realm-management": ["view-users", "manage-users"]
+      }
+    }
+  ],
   "scopeMappings": [
     {
       "clientScope": "offline_access",
@@ -810,6 +1072,16 @@
           }
         }
       ]
+    },
+    {
+      "id": "8f2e6c1a-9d4b-4e7a-9c3f-1a5d7e6b2c40",
+      "name": "launches.stock.write",
+      "description": "Grants a trusted service the ability to reserve and release launch stock on behalf of the order-creation saga.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
     }
   ],
   "defaultDefaultClientScopes": [

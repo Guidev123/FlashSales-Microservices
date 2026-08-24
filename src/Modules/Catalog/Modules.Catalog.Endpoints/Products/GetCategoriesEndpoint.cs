@@ -27,7 +27,8 @@ namespace Modules.Catalog.Endpoints.Products
             }).WithTags(EndpointsModule.Module)
               .WithSummary("List all product categories")
               .WithDescription("Returns a paginated list of all product categories available in the catalog.")
-              .Produces<PagedResult<CategoryResponse>>(StatusCodes.Status200OK);
+              .Produces<PagedResult<CategoryResponse>>(StatusCodes.Status200OK)
+              .AllowAnonymous();
         }
     }
 }

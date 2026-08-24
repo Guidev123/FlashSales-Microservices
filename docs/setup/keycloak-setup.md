@@ -1,6 +1,6 @@
 # Keycloak — Realm `flash-sales-dev` Setup
 
-> Full recreation guide based on the realm export. Keycloak version: **26.2.5**
+> Full recreation guide via the admin console. Keycloak version: **26.6.1**
 
 ---
 
@@ -9,40 +9,34 @@
 ```yaml
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.2.5
+    image: quay.io/keycloak/keycloak:26.6.1
     command: start-dev
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin_pass
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak
       KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: keycloak
-      KC_HTTP_PORT: 8080
+      KC_DB_PASSWORD: keycloak_pass
     ports:
       - "8080:8080"
     depends_on:
-      keycloak-db:
+      keycloak-postgres:
         condition: service_healthy
 
-  keycloak-db:
-    image: postgres:16
+  keycloak-postgres:
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: keycloak
-    volumes:
-      - keycloak-db-data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: keycloak_pass
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U keycloak"]
       interval: 5s
-      retries: 5
-
-volumes:
-  keycloak-db-data:
+      retries: 10
 ```
 
-Go to `http://localhost:8080` and log in with `admin / admin`.
+Go to `http://localhost:8080` and log in with `admin / admin_pass`.
 
 ---
 
@@ -63,7 +57,7 @@ Go to **Realm Settings** and configure the following tabs:
 
 | Setting | Value |
 |---|---|
-| User registration | OFF — registration is handled exclusively by the API |
+| User registration | OFF |
 | Login with email | ON |
 | Duplicate emails | OFF |
 | Remember me | ON |
@@ -79,8 +73,6 @@ Go to **Realm Settings** and configure the following tabs:
 | SSO Session Max | 10 hours |
 | Access Token Lifespan | 5 minutes |
 
-> The short access token lifespan (5 min) is intentional — roles and permissions are read from the database on every request via `ClaimsTransformation`, so the token doesn't need a long lifetime.
-
 ---
 
 ## 4. Realm Roles
@@ -89,21 +81,36 @@ Go to **Realm roles → Create role** and create the three roles below.
 
 ### `activated`
 - **Role name:** `activated`
-- Assigned by the API after the user completes the activation flow (`POST /api/v1/users` or `POST /api/v1/users/customer/activate`). The API middleware checks this role in the JWT to grant access to protected routes.
+- Assigned by the API after the user completes the activation flow (`POST /api/v1/users` or `POST /api/v1/users/customer/activate`).
 
 ### `customer`
 - **Role name:** `customer`
-- Assigned in the domain database after activation. **Not assigned in Keycloak** — it exists in Keycloak only for naming consistency and as a reference in the public client mappers.
+- Not assigned in Keycloak — used only by the `flash-sales-public` mappers in §6.
 
 ### `seller`
 - **Role name:** `seller`
-- Assigned in the domain database after `POST /api/v1/users/seller/activate`. Like `customer`, **not managed by Keycloak** — it lives in the API database.
-
-> **Note:** `customer` and `seller` exist in Keycloak solely for the `flash-sales-public` mappers. Role assignment to users is managed exclusively by the API via the database.
+- Not assigned in Keycloak — used only by the `flash-sales-public` mappers in §6.
 
 ---
 
-## 5. Client: `flash-sales-public` (Frontend)
+## 5. Client Scope: `launches.stock.write`
+
+Go to **Client scopes → Create client scope**.
+
+| Field | Value |
+|---|---|
+| Name | `launches.stock.write` |
+| Description | Reserve and release launch stock on behalf of the order-creation saga |
+| Type | Optional |
+| Protocol | OpenID Connect |
+| Display on consent screen | OFF |
+| Include in token scope | ON |
+
+Create any further service-to-service scope the same way, named `<service>.<capability>`.
+
+---
+
+## 6. Client: `flash-sales-public` (Frontend)
 
 Go to **Clients → Create client**.
 
@@ -122,8 +129,6 @@ Go to **Clients → Create client**.
 | Implicit flow | OFF |
 | Service accounts | OFF |
 
-> `Direct access grants` enabled allows the Resource Owner Password flow — useful for local testing with tools like Postman or integration scripts. Disable in production if not needed.
-
 ### Login Settings
 | Field | Value |
 |---|---|
@@ -133,11 +138,7 @@ Go to **Clients → Create client**.
 
 ### Protocol Mappers
 
-After creating the client, go to **Clients → flash-sales-public → Client scopes → flash-sales-public-dedicated → Add mapper → By configuration**.
-
-Create the following mappers:
-
----
+Go to **Clients → flash-sales-public → Client scopes → flash-sales-public-dedicated → Add mapper → By configuration**.
 
 #### Mapper: `birth_date`
 | Field | Value |
@@ -147,13 +148,7 @@ Create the following mappers:
 | User Attribute | `birth_date` |
 | Token Claim Name | `birth_date` |
 | Claim JSON Type | String |
-| Add to ID token | ON |
-| Add to access token | ON |
-| Add to userinfo | ON |
-
-> Exposes the `birth_date` attribute set by the API via Admin API after registration.
-
----
+| Add to ID token / access token / userinfo | ON |
 
 #### Mapper: `activated`
 | Field | Value |
@@ -163,13 +158,7 @@ Create the following mappers:
 | Token Claim Name | `activated` |
 | Claim JSON Type | String |
 | Multivalued | ON |
-| Add to ID token | ON |
-| Add to access token | ON |
-| Add to userinfo | ON |
-
-> The API middleware reads this claim to check whether the user completed the activation flow. If absent → 403 with `account_not_activated`.
-
----
+| Add to ID token / access token / userinfo | ON |
 
 #### Mapper: `customer`
 | Field | Value |
@@ -179,11 +168,7 @@ Create the following mappers:
 | Token Claim Name | `customer` |
 | Claim JSON Type | String |
 | Multivalued | ON |
-| Add to ID token | ON |
-| Add to access token | ON |
-| Add to userinfo | ON |
-
----
+| Add to ID token / access token / userinfo | ON |
 
 #### Mapper: `seller`
 | Field | Value |
@@ -193,33 +178,52 @@ Create the following mappers:
 | Token Claim Name | `seller` |
 | Claim JSON Type | String |
 | Multivalued | ON |
-| Add to ID token | ON |
-| Add to access token | ON |
-| Add to userinfo | ON |
+| Add to ID token / access token / userinfo | ON |
 
----
+#### Audience mappers
 
-#### Mapper: `audience`
-| Field | Value |
+Create one per resource-server client from §7 (create those clients first — the dropdown below only lists clients that already exist):
+
+| Field | Value (repeat per service) |
 |---|---|
 | Mapper type | Audience |
-| Name | `audience` |
-| Included Client Audience | `flash-sales-api` |
+| Name | `audience-catalog`, `audience-launches`, `audience-orders`, `audience-payments`, `audience-users` |
+| Included Client Audience | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` (matching the name) |
+| Add to ID token | OFF |
 | Add to access token | ON |
-
-> Ensures the JWT issued to the frontend includes `flash-sales-api` as the audience. The .NET API validates this field when verifying the token.
 
 ---
 
-## 6. Client: `flash-sales-api` (Backend / Service Account)
+## 7. Clients: Resource Servers
 
-Go to **Clients → Create client**.
+Create one client per service: `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`.
 
 ### General Settings
 | Field | Value |
 |---|---|
 | Client type | OpenID Connect |
-| Client ID | `flash-sales-api` |
+| Client ID | `flash-sales-catalog` *(repeat for the other four)* |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | OFF (public) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Implicit flow | OFF |
+| Service accounts roles | OFF |
+
+No redirect URIs, mappers, or credentials needed on these clients.
+
+---
+
+## 8. Client: `flash-sales-orders-svc` (Orders service account)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-orders-svc` |
 
 ### Capability Config
 | Field | Value |
@@ -229,26 +233,60 @@ Go to **Clients → Create client**.
 | Direct access grants | OFF |
 | Service accounts roles | ON |
 
-### After creating: assign Service Account roles
+### Client Scopes
 
-Go to **Clients → flash-sales-api → Service account roles → Assign role → Filter by clients → realm-management** and assign:
-
-- `manage-users` — to create users, set attributes, and assign roles via Admin API
-- `view-users` — to look up existing users
+Go to **Clients → flash-sales-orders-svc → Client scopes → Add client scope**, select `launches.stock.write` (§5), and add it as **Optional**.
 
 ### Credentials
 
-Go to **Clients → flash-sales-api → Credentials** and copy the `Client secret`. Set it in the API environment variables:
+Go to **Clients → flash-sales-orders-svc → Credentials**, copy the **Client secret**, and set it in the Orders service's configuration:
 
 ```
-Keycloak__ClientId=flash-sales-api
-Keycloak__ClientSecret=<secret>
-Keycloak__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__ClientId=flash-sales-orders-svc
+ClientCredentials__ClientSecret=<secret>
 ```
 
 ---
 
-## 7. Identity Providers
+## 9. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-users-admin` |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | ON (confidential client) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Service accounts roles | ON |
+
+### Service Account Roles
+
+Go to **Clients → flash-sales-users-admin → Service account roles → Assign role → Filter by clients → realm-management** and assign:
+
+- `manage-users`
+- `view-users`
+
+### Credentials
+
+Go to **Clients → flash-sales-users-admin → Credentials**, copy the **Client secret**, and set it in the Users service's configuration:
+
+```
+KeyCloak__ConfidentialClientId=flash-sales-users-admin
+KeyCloak__ConfidentialClientSecret=<secret>
+KeyCloak__BaseUrl=http://localhost:8080/realms/
+KeyCloak__AdminUrl=http://localhost:8080/admin/realms/
+KeyCloak__CurrentRealm=flash-sales-dev
+```
+
+---
+
+## 10. Identity Providers
 
 ### GitHub
 
@@ -258,14 +296,14 @@ Go to **Identity Providers → Add provider → GitHub**.
 |---|---|
 | Client ID | `<your GitHub App client_id>` |
 | Client Secret | `<your GitHub App client_secret>` |
-| Trust Email | OFF — GitHub does not guarantee `email_verified` in all cases |
+| Trust Email | OFF |
 | Sync mode | LEGACY |
 | First Login Flow | `first broker login` (default) |
 
-> **Authorization callback URL** to be set in the GitHub App:
-> ```
-> http://localhost:8080/realms/flash-sales-dev/broker/github/endpoint
-> ```
+Authorization callback URL to set in the GitHub App:
+```
+http://localhost:8080/realms/flash-sales-dev/broker/github/endpoint
+```
 
 ### Google
 
@@ -279,18 +317,16 @@ Go to **Identity Providers → Add provider → Google**.
 | Sync mode | LEGACY |
 | First Login Flow | `first broker login` (default) |
 
-> **Authorized redirect URI** to be set in the Google Cloud Console:
-> ```
-> http://localhost:8080/realms/flash-sales-dev/broker/google/endpoint
-> ```
-
-> **Trust Email OFF on both IdPs:** the email coming from social login is not automatically treated as verified. Account linking via re-authentication protects against unintended account merging.
+Authorized redirect URI to set in the Google Cloud Console:
+```
+http://localhost:8080/realms/flash-sales-dev/broker/google/endpoint
+```
 
 ---
 
-## 8. First Broker Login Flow (Account Linking)
+## 11. First Broker Login Flow (Account Linking)
 
-The default `first broker login` flow is already correctly set up for account linking. Verify under **Authentication → first broker login** that the authenticators are configured as follows:
+Verify under **Authentication → first broker login** that the authenticators are configured as follows:
 
 | Authenticator | Requirement |
 |---|---|
@@ -301,35 +337,27 @@ The default `first broker login` flow is already correctly set up for account li
 | ↳ Verify Existing Account By Email | ALTERNATIVE |
 | ↳ Verify Existing Account By Re-authentication | ALTERNATIVE |
 
-> This flow is triggered on the **first time** a user authenticates via a social provider. If the email already exists in the realm, Keycloak requires re-authentication with the existing account's password before linking the two identities. After linking, subsequent social logins work directly without any prompt.
+---
+
+## 12. Theme
+
+1. Mount `docker/keycloak/themes/flash-sales` into the Keycloak container.
+2. Go to **Realm Settings → Themes → Login theme** and select `flash-sales`.
 
 ---
 
-## 9. Theme
-
-The realm uses a custom login theme called `flash-sales` (`loginTheme: "flash-sales"`). To recreate it:
-
-1. Create the `themes/flash-sales` folder inside the Keycloak directory (or mount it as a Docker volume)
-2. Follow the standard Keycloak theme structure: `login/`, `account/`, `email/`
-3. Go to **Realm Settings → Themes → Login theme** and select `flash-sales`
-
-If the theme is not available, leave the field empty — the default Keycloak theme will be used.
-
----
-
-## 10. Summary
+## 13. Summary
 
 | Component | Value |
 |---|---|
 | Realm | `flash-sales-dev` |
-| User registration | OFF — API creates users via Admin API |
-| Duplicate emails | OFF — email uniqueness enforced by Keycloak |
-| Public client | `flash-sales-public` — used by the SPA frontend |
-| Confidential client | `flash-sales-api` — used by the .NET API via Client Credentials |
+| User registration | OFF |
+| Duplicate emails | OFF |
+| User client | `flash-sales-public` |
+| Resource-server clients | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` |
+| Service client | `flash-sales-orders-svc` — holds `launches.stock.write` |
+| Admin client | `flash-sales-users-admin` — holds `manage-users`/`view-users` |
+| Role `activated` | Realm role, checked on every request |
+| Roles `customer` / `seller` | Used only by `flash-sales-public` mappers |
+| Scope `launches.stock.write` | Optional, granted only to `flash-sales-orders-svc` |
 | Identity Providers | GitHub + Google with First Broker Login flow |
-| Role `activated` | Signals activation — verified by the API middleware in the JWT |
-| Roles `customer` / `seller` | Exist in Keycloak for mappers — managed in the API database |
-| Mapper `birth_date` | Custom attribute set by the API after registration |
-| Mapper `audience` | Includes `flash-sales-api` as audience in the JWT |
-| Account linking | Enabled via First Broker Login with re-authentication |
-

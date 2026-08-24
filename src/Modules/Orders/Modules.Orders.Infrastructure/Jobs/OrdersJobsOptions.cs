@@ -2,7 +2,7 @@ namespace Modules.Orders.Infrastructure.Jobs
 {
     internal sealed class OrdersJobsOptions
     {
-        public const string SectionName = "Orders:Jobs";
+        public const string SectionName = "Jobs";
 
         public int ExpirationSweepIntervalInSeconds { get; init; } = 30;
 
