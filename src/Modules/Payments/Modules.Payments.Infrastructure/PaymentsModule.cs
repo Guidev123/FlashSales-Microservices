@@ -14,7 +14,6 @@ using Modules.Payments.Infrastructure.Database;
 using Modules.Payments.Infrastructure.Database.Repositories;
 using Modules.Payments.Infrastructure.Gateway;
 using Modules.Payments.Infrastructure.Jobs;
-using Modules.Payments.Infrastructure.PublicApi;
 using System.Reflection;
 
 namespace Modules.Payments.Infrastructure
@@ -38,7 +37,6 @@ namespace Modules.Payments.Infrastructure
                 .AddEndpoints()
                 .AddGateway(configuration)
                 .AddJobs(configuration)
-                .AddPublicApi()
                 .AddServices();
 
             return services;
@@ -91,12 +89,6 @@ namespace Modules.Payments.Infrastructure
         {
             services.Configure<PaymentsJobsOptions>(configuration.GetSection(PaymentsJobsOptions.SectionName));
             services.AddHostedService<PaymentReconciliationJob>();
-            return services;
-        }
-
-        private static IServiceCollection AddPublicApi(this IServiceCollection services)
-        {
-            services.AddTransient<IPaymentsPublicApi, PaymentsPublicApi>();
             return services;
         }
 

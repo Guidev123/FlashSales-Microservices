@@ -5,13 +5,21 @@ namespace Modules.Payments.Contracts
     public interface IPaymentsPublicApi
     {
         Task<Result<InitiateCheckoutResponse>> InitiateCheckoutAsync(
-            Guid orderId,
-            string orderCode,
-            decimal amount,
-            Guid customerId,
-            string customerEmail,
-            IReadOnlyCollection<CheckoutLineItem> items,
+            InitiateCheckoutRequest request,
             CancellationToken cancellationToken = default
+            );
+
+        public sealed record InitiateCheckoutRequest(
+            Guid OrderId,
+            string OrderCode,
+            decimal Amount,
+            IReadOnlyCollection<CheckoutLineItem> Items,
+            CancellationToken CancellationToken = default
+            );
+        public sealed record InitiateCheckoutResponse(
+            Guid PaymentId,
+            Guid AttemptId,
+            string CheckoutUrl
             );
     }
 }

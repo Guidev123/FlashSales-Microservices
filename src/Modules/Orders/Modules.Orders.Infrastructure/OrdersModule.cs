@@ -7,9 +7,7 @@ using FlashSales.Infrastructure.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Modules.Launches.Contracts;
-using Modules.Orders.Application;
 using Modules.Orders.Application.Orders.Sagas;
 using Modules.Orders.Application.Orders.Services;
 using Modules.Orders.Domain.Launches.Repositories;
@@ -20,6 +18,7 @@ using Modules.Orders.Infrastructure.Database.Repositories;
 using Modules.Orders.Infrastructure.Jobs;
 using Modules.Orders.Infrastructure.Options;
 using Modules.Orders.Infrastructure.Services;
+using Modules.Payments.Contracts;
 using System.Reflection;
 
 namespace Modules.Orders.Infrastructure
@@ -113,6 +112,7 @@ namespace Modules.Orders.Infrastructure
                 ?? throw new NullReferenceException();
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
+            services.AddCustomHttpClientWithClientCredentialsAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
 
             return services;
         }

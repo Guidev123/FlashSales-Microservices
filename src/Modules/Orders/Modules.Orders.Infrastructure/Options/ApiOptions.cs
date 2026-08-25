@@ -7,5 +7,6 @@ namespace Modules.Orders.Infrastructure.Options
         public const string SectionName = "ApiOptions";
 
         public HttpOptions LaunchesApi { get; set; } = null!;
+        public HttpOptions PaymentsApi { get; set; } = null!;
     }
 }
