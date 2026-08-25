@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "FlashSales.Users.Contracts.Protos";
+
+package Modules.Users.Contracts;
+
+service UserPermissionsService{
+	rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse){}
+}
+
+message GetUserPermissionsRequest{
+	string identity_id = 1;
+}
+
+message GetUserPermissionsResponse{
+	string user_id = 1;
+	repeated string permissions = 2;
+}

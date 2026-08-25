@@ -1,7 +1,9 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +12,7 @@ using Modules.Payments.Application.Payments.Services;
 using Modules.Payments.Contracts;
 using Modules.Payments.Domain.Payments.Repositories;
 using Modules.Payments.Endpoints;
+using Modules.Payments.Infrastructure.Authorization;
 using Modules.Payments.Infrastructure.Database;
 using Modules.Payments.Infrastructure.Database.Repositories;
 using Modules.Payments.Infrastructure.Gateway;
@@ -95,6 +98,17 @@ namespace Modules.Payments.Infrastructure
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddTransient<PaymentOutcomeProcessor>();
+            services.AddTransient<IPermissionService, PermissionService>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddGrpcClient<UserPermissionsService.UserPermissionsServiceClient>(options =>
+            {
+                options.Address = new Uri(configuration["ExternalServices:UsersApi"]!);
+            }).AddResilienceHandler(nameof(HttpResiliencePipelineExtensions), pipeline => pipeline.ConfigureGrpcResilience());
 
             return services;
         }
