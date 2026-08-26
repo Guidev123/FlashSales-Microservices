@@ -29,7 +29,7 @@ namespace Modules.Orders.Endpoints.Orders
 
                 return result.Match(Results.Ok, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(OrdersPermissions.Orders.ReadOwn)
+              .RequirePermission(OrdersPermissions.Orders.ReadOwn)
               .RequireScope(OrdersScopes.Read)
               .WithSummary("Get an order by id")
               .WithDescription("Returns the details of an order owned by the authenticated customer.")

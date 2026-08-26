@@ -29,7 +29,7 @@ namespace Modules.Catalog.Endpoints.Products
 
                 return result.Match(() => Results.NoContent(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(CatalogPermissions.Products.ProductsActivate)
+              .RequirePermission(CatalogPermissions.Products.ProductsActivate)
               .RequireScope(CatalogScopes.Write)
               .WithSummary("Activate a product")
               .WithDescription(

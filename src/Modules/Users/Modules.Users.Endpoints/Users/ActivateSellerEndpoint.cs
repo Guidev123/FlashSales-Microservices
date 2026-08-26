@@ -33,7 +33,7 @@ namespace Modules.Users.Endpoints.Users
 
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Accounts.UpdateOwn)
+              .RequirePermission(UsersPermissions.Accounts.UpdateOwn)
               .RequireScope(UsersScopes.Write)
               .WithSummary("Activate a seller account")
               .WithDescription(

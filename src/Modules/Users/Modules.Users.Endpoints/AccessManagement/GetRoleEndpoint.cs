@@ -25,7 +25,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                     role => Results.Ok(role),
                     ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Roles.Read)
+              .RequirePermission(UsersPermissions.Roles.Read)
               .RequireScope(UsersScopes.Read)
               .WithSummary("Get a role by name")
               .WithDescription("Returns a single role and the list of permission codes currently assigned to it.")

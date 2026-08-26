@@ -22,7 +22,7 @@ namespace Modules.Catalog.Endpoints.Products
                 return result.Match(() => Results.Created($"api/v1/products/categories/{result.Value.Id}",
                     result.Value.Id), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(CatalogPermissions.Products.CategoriesCreate)
+              .RequirePermission(CatalogPermissions.Products.CategoriesCreate)
               .RequireScope(CatalogScopes.Write)
               .WithSummary("Create a new product category")
               .WithDescription("Creates a new category that products can be associated with. Category names must be unique.")

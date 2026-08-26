@@ -12,7 +12,7 @@ namespace Modules.Orders.Infrastructure.Services
         public Task<Result> ReleaseAsync(ReleaseLaunchRequest request, CancellationToken cancellationToken = default)
         {
             return client.PostAsJsonAsync(
-                $"api/v1/launches/{request.LaunchId}/stock/release",
+                "api/v1/launches/stock/release",
                 request,
                 cancellationToken
                 ).ToResultAsync(logger, ct: cancellationToken);
@@ -21,7 +21,7 @@ namespace Modules.Orders.Infrastructure.Services
         public Task<Result> ReserveAsync(ReserveLaunchRequest request, CancellationToken cancellationToken = default)
         {
             return client.PostAsJsonAsync(
-                $"api/v1/launches/{request.LaunchId}/stock/reserve",
+                "api/v1/launches/stock/reserve",
                 request,
                 cancellationToken
                 ).ToResultAsync(logger, ct: cancellationToken);

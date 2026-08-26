@@ -24,7 +24,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                     () => Results.Created($"api/v1/roles/{request.Name}", request.Name),
                     ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Roles.Create)
+              .RequirePermission(UsersPermissions.Roles.Create)
               .RequireScope(UsersScopes.Write)
               .WithSummary("Create a new role")
               .WithDescription(

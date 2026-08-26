@@ -24,7 +24,7 @@ namespace Modules.Users.Endpoints.AccessManagement
 
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Permissions.Revoke)
+              .RequirePermission(UsersPermissions.Permissions.Revoke)
               .RequireScope(UsersScopes.Write)
               .WithSummary("Revoke a permission from a role")
               .WithDescription("Removes the specified permission from the role. The permission itself is not deleted from the system.")

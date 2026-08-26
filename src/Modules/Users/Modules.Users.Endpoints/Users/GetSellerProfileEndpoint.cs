@@ -25,7 +25,7 @@ namespace Modules.Users.Endpoints.Users
                 return result.Match(() => Results.Ok(result.Value), ApiResults.Problem);
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Accounts.SellerReadOwn)
+              .RequirePermission(UsersPermissions.Accounts.SellerReadOwn)
               .RequireScope(UsersScopes.Read)
               .WithSummary("Get the authenticated seller's profile")
               .WithDescription(

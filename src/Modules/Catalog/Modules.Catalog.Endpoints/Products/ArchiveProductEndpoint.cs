@@ -29,7 +29,7 @@ namespace Modules.Catalog.Endpoints.Products
 
                 return result.Match(() => Results.NoContent(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(CatalogPermissions.Products.ProductsArchive)
+              .RequirePermission(CatalogPermissions.Products.ProductsArchive)
               .RequireScope(CatalogScopes.Write)
               .WithSummary("Archive a product")
               .WithDescription(

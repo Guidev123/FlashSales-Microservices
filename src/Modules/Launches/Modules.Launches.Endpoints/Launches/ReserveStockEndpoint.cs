@@ -13,15 +13,14 @@ namespace Modules.Launches.Endpoints.Launches
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/v1/launches/{launchId:guid}/stock/reserve", async (
+            app.MapPost("api/v1/launches/stock/reserve", async (
                 ReserveStockRequest request,
-                Guid launchId,
                 ISender sender,
                 CancellationToken cancellationToken
                 ) =>
             {
                 var result = await sender.SendAsync(new ReserveStockCommand(
-                    launchId,
+                    request.LaunchId,
                     request.OrderId,
                     request.Quantity
                     ), cancellationToken);
@@ -31,6 +30,7 @@ namespace Modules.Launches.Endpoints.Launches
         }
 
         record ReserveStockRequest(
+            Guid LaunchId,
             int Quantity,
             Guid OrderId
             );

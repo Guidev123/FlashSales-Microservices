@@ -10,5 +10,11 @@ namespace FlashSales.Endpoints.Endpoints
         {
             return builder.RequireAuthorization(AuthorizationPolicies.ForScopes(scopes));
         }
+
+        public static TBuilder RequirePermission<TBuilder>(this TBuilder builder, string permission)
+            where TBuilder : IEndpointConventionBuilder
+        {
+            return builder.RequireAuthorization(permission);
+        }
     }
 }

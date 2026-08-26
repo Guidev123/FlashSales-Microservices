@@ -41,7 +41,7 @@ namespace Modules.Catalog.Endpoints.Products
                 return result.Match(success => Results.Ok(success), ApiResults.Problem);
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
-              .RequireAuthorization(CatalogPermissions.Products.ProductsUpdate)
+              .RequirePermission(CatalogPermissions.Products.ProductsUpdate)
               .RequireScope(CatalogScopes.Write)
               .WithSummary("Upload a product image")
               .WithDescription(

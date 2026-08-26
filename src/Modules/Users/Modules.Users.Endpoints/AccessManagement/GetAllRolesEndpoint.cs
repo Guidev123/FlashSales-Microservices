@@ -27,7 +27,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                     role => Results.Ok(role),
                     ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Roles.Read)
+              .RequirePermission(UsersPermissions.Roles.Read)
               .RequireScope(UsersScopes.Read)
               .WithSummary("List all roles")
               .WithDescription(

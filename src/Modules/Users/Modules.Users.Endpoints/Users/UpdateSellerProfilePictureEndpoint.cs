@@ -32,7 +32,7 @@ namespace Modules.Users.Endpoints.Users
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Accounts.UpdateOwn)
+              .RequirePermission(UsersPermissions.Accounts.UpdateOwn)
               .RequireScope(UsersScopes.Write)
               .WithSummary("Update the seller's profile picture")
               .WithDescription(

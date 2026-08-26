@@ -33,7 +33,7 @@ namespace Modules.Orders.Endpoints.Orders
 
                 return result.Match(success => Results.Ok(success), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(OrdersPermissions.Orders.Create)
+              .RequirePermission(OrdersPermissions.Orders.Create)
               .RequireScope(OrdersScopes.Write)
               .WithSummary("Create an order for a Launch")
               .WithDescription(

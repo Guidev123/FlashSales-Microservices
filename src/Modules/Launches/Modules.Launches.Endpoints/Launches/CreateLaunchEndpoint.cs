@@ -32,7 +32,7 @@ namespace Modules.Launches.Endpoints.Launches
                 Results.Created($"api/v1/launches/{result.Value.Id}",
                 result.Value), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-            .RequireAuthorization(LaunchesPermissions.Launches.Create)
+            .RequirePermission(LaunchesPermissions.Launches.Create)
             .RequireScope(LaunchesScopes.Write);
         }
 

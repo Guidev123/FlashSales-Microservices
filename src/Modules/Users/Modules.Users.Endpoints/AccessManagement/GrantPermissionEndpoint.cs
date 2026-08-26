@@ -25,7 +25,7 @@ namespace Modules.Users.Endpoints.AccessManagement
 
                 return result.Match(Results.Created, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(UsersPermissions.Permissions.Grant)
+              .RequirePermission(UsersPermissions.Permissions.Grant)
               .RequireScope(UsersScopes.Write)
               .WithSummary("Grant a permission to a role")
               .WithDescription(

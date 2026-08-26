@@ -29,7 +29,7 @@ namespace Modules.Catalog.Endpoints.Products
 
                 return result.Match(success => Results.Ok(success), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-              .RequireAuthorization(CatalogPermissions.Products.ProductsView)
+              .RequirePermission(CatalogPermissions.Products.ProductsView)
               .RequireScope(CatalogScopes.Read)
               .WithSummary("List the authenticated seller's products")
               .WithDescription(

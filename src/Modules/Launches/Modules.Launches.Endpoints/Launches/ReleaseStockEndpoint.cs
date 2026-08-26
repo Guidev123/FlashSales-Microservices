@@ -13,15 +13,14 @@ namespace Modules.Launches.Endpoints.Launches
     {
         public void MapEndpoint(IEndpointRouteBuilder app)
         {
-            app.MapPost("api/v1/launches/{launchId:guid}/stock/release", async (
+            app.MapPost("api/v1/launches/stock/release", async (
                 ReleaseStockRequest request,
-                Guid launchId,
                 ISender sender,
                 CancellationToken cancellationToken
                 ) =>
             {
                 var result = await sender.SendAsync(new ReleaseStockCommand(
-                    launchId,
+                    request.LaunchId,
                     request.OrderId,
                     request.Quantity
                     ), cancellationToken);
@@ -32,6 +31,7 @@ namespace Modules.Launches.Endpoints.Launches
         }
 
         record ReleaseStockRequest(
+            Guid LaunchId,
             int Quantity,
             Guid OrderId
             );
