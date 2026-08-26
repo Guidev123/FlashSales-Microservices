@@ -4,5 +4,6 @@ namespace Modules.Users.Endpoints
     {
         public const string Read = "users.read";
         public const string Write = "users.write";
+        public const string PermissionsRead = "users.permissions.read";
     }
 }

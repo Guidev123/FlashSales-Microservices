@@ -4,11 +4,11 @@ using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Modules.Users.Application;
 using Modules.Users.Application.AccessManagement.Options;
 using Modules.Users.Application.AccessManagement.Services;
 using Modules.Users.Application.Users.Services;
@@ -16,6 +16,7 @@ using Modules.Users.Contracts;
 using Modules.Users.Domain.AccessManagement.Repositories;
 using Modules.Users.Domain.Users.Repositories;
 using Modules.Users.Endpoints;
+using Modules.Users.Endpoints.Users;
 using Modules.Users.Infrastructure.Authorization;
 using Modules.Users.Infrastructure.Database;
 using Modules.Users.Infrastructure.Database.Repositories;
@@ -43,7 +44,8 @@ namespace Modules.Users.Infrastructure
                 .AddData(configuration)
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
-                .AddPublicApi();
+                .AddPublicApi()
+                .AddGrpcServer();
 
             return services;
         }
@@ -128,6 +130,23 @@ namespace Modules.Users.Infrastructure
         {
             services.AddTransient<IUsersPublicApi, UsersPublicApi>();
             return services;
+        }
+
+        private static IServiceCollection AddGrpcServer(this IServiceCollection services)
+        {
+            services.AddGrpc();
+            return services;
+        }
+
+        public static IApplicationBuilder MapGrpcEndpoints(this IApplicationBuilder app)
+        {
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapGrpcService<GetUserPermissionsEndpoint>()
+                    .RequireScope(UsersScopes.PermissionsRead);
+            });
+
+            return app;
         }
     }
 }

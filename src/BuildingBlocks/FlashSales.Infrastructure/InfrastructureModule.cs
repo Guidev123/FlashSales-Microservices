@@ -7,6 +7,7 @@ using FlashSales.Application.Bus;
 using FlashSales.Application.Cache;
 using FlashSales.Application.Messaging;
 using FlashSales.Application.Storage;
+using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Authentication;
 using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Bus;
@@ -15,9 +16,11 @@ using FlashSales.Infrastructure.Factories;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Storage;
 using FluentValidation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MidR.DependencyInjection;
 using StackExchange.Redis;
@@ -37,6 +40,8 @@ namespace FlashSales.Infrastructure
                 .AddAuthenticationExtensions()
                 .AddAuthorizationExtensions()
                 .AddServiceBus(configuration);
+
+            services.AddOpenApi();
 
             return services;
         }
@@ -160,6 +165,23 @@ namespace FlashSales.Infrastructure
         private static IServiceCollection AddAuthorizationExtensions(this IServiceCollection services)
         {
             return services.AddAuthorizationInternal();
+        }
+
+        public static WebApplication UseInfrastructureModule(this WebApplication app)
+        {
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapOpenApi();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapEndpoints();
+
+            return app;
         }
     }
 }

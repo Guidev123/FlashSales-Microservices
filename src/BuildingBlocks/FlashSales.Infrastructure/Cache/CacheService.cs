@@ -59,10 +59,5 @@ namespace FlashSales.Infrastructure.Cache
             JsonSerializer.Serialize(writer, value, JsonSerializerOptionsExtensions.GetDefault());
             return buffer.WrittenSpan.ToArray();
         }
-
-        public Task SetAsync<T>(string key, T value, int? expiration = null, CancellationToken cancellationToken = default) where T : class
-        {
-            return SetAsync(key, value, expiration.HasValue ? TimeSpan.FromMinutes(expiration.Value) : null, cancellationToken);
-        }
     }
 }

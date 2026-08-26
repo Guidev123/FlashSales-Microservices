@@ -364,6 +364,38 @@
       "optionalClientScopes": ["launches.stock.write"]
     },
     {
+      "id": "b2c3d4e5-3000-3000-3000-000000000003",
+      "clientId": "flash-sales-payments-svc",
+      "name": "Payments service account",
+      "description": "Confidential client used only by the Payments service (client_credentials) to call other microservices — currently the Users gRPC permissions lookup. Never used by a human.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-payments-svc-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": ["users.permissions.read"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000103",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
       "id": "b2c3d4e5-3000-3000-3000-000000000002",
       "clientId": "flash-sales-users-admin",
       "name": "Users service — Keycloak admin",
@@ -1083,6 +1115,16 @@
       "id": "8f2e6c1a-9d4b-4e7a-9c3f-1a5d7e6b2c40",
       "name": "launches.stock.write",
       "description": "Grants a trusted service the ability to reserve and release launch stock on behalf of the order-creation saga.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "8f2e6c1a-9d4b-4e7a-9c3f-1a5d7e6b2c41",
+      "name": "users.permissions.read",
+      "description": "Grants a trusted service the ability to look up any identity's permissions via the Users gRPC service.",
       "protocol": "openid-connect",
       "attributes": {
         "include.in.token.scope": "true",

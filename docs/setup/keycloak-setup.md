@@ -102,6 +102,7 @@ Go to **Client scopes → Create client scope** and create each of the scopes be
 | Name | Type | Description |
 |---|---|---|
 | `launches.stock.write` | Optional | Reserve and release launch stock on behalf of the order-creation saga |
+| `users.permissions.read` | Optional | Look up any identity's permissions via the Users gRPC service |
 
 Create any further service-to-service scope the same way, named `<service>.<capability>`, and register it as **Optional** on the calling service's client (§8).
 
@@ -265,7 +266,53 @@ ClientCredentials__ClientSecret=<secret>
 
 ---
 
-## 9. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
+## 9. Client: `flash-sales-payments-svc` (Payments service account)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-payments-svc` |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | ON (confidential client) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Service accounts roles | ON |
+
+### Client Scopes
+
+Go to **Clients → flash-sales-payments-svc → Client scopes → Add client scope**, select `users.permissions.read` (§5), and add it as **Optional**.
+
+### Protocol Mappers
+
+Go to **Clients → flash-sales-payments-svc → Client scopes → flash-sales-payments-svc-dedicated → Add mapper → By configuration**.
+
+| Field | Value |
+|---|---|
+| Mapper type | Audience |
+| Name | `audience-users` |
+| Included Client Audience | `flash-sales-users` |
+| Add to ID token | OFF |
+| Add to access token | ON |
+
+This is required, not optional — without it the token this client gets from `client_credentials` won't carry `flash-sales-users` as audience, and the Users gRPC service will reject it at authentication.
+
+### Credentials
+
+Go to **Clients → flash-sales-payments-svc → Credentials**, copy the **Client secret**, and set it in the Payments service's configuration:
+
+```
+ClientCredentials__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__ClientId=flash-sales-payments-svc
+ClientCredentials__ClientSecret=<secret>
+```
+
+---
+
+## 10. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
 
 ### General Settings
 | Field | Value |
@@ -302,7 +349,7 @@ KeyCloak__CurrentRealm=flash-sales-dev
 
 ---
 
-## 10. Identity Providers
+## 11. Identity Providers
 
 ### GitHub
 
@@ -340,7 +387,7 @@ http://localhost:8080/realms/flash-sales-dev/broker/google/endpoint
 
 ---
 
-## 11. First Broker Login Flow (Account Linking)
+## 12. First Broker Login Flow (Account Linking)
 
 Verify under **Authentication → first broker login** that the authenticators are configured as follows:
 
@@ -355,14 +402,14 @@ Verify under **Authentication → first broker login** that the authenticators a
 
 ---
 
-## 12. Theme
+## 13. Theme
 
 1. Mount `docker/keycloak/themes/flash-sales` into the Keycloak container.
 2. Go to **Realm Settings → Themes → Login theme** and select `flash-sales`.
 
 ---
 
-## 13. Summary
+## 14. Summary
 
 | Component | Value |
 |---|---|
@@ -371,10 +418,11 @@ Verify under **Authentication → first broker login** that the authenticators a
 | Duplicate emails | OFF |
 | User client | `flash-sales-public` |
 | Resource-server clients | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` |
-| Service client | `flash-sales-orders-svc` — holds `launches.stock.write` |
+| Service clients | `flash-sales-orders-svc` (holds `launches.stock.write`), `flash-sales-payments-svc` (holds `users.permissions.read`, audience mapped to `flash-sales-users`) |
 | Admin client | `flash-sales-users-admin` — holds `manage-users`/`view-users` |
 | Role `activated` | Realm role, checked on every request |
 | Roles `customer` / `seller` | Used only by `flash-sales-public` mappers |
 | Scope `launches.stock.write` | Optional, granted only to `flash-sales-orders-svc` |
+| Scope `users.permissions.read` | Optional, granted only to `flash-sales-payments-svc` |
 | Scopes `catalog.*`/`launches.*`/`orders.*`/`users.*` (`.read`/`.write`) | Default on `flash-sales-public` — every user token carries them |
 | Identity Providers | GitHub + Google with First Broker Login flow |

@@ -109,7 +109,7 @@ namespace Modules.Orders.Infrastructure
         private static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
         {
             var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
-                ?? throw new NullReferenceException();
+                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
             services.AddCustomHttpClientWithOnBehalfOfAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);

@@ -2,6 +2,7 @@ using FlashSales.Application.Abstractions;
 using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
+using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ using Modules.Payments.Infrastructure.Database;
 using Modules.Payments.Infrastructure.Database.Repositories;
 using Modules.Payments.Infrastructure.Gateway;
 using Modules.Payments.Infrastructure.Jobs;
+using Modules.Payments.Infrastructure.Options;
 using System.Reflection;
 
 namespace Modules.Payments.Infrastructure
@@ -40,7 +42,8 @@ namespace Modules.Payments.Infrastructure
                 .AddEndpoints()
                 .AddGateway(configuration)
                 .AddJobs(configuration)
-                .AddServices();
+                .AddServices()
+                .AddGrpcServices(configuration);
 
             return services;
         }
@@ -105,10 +108,10 @@ namespace Modules.Payments.Infrastructure
 
         private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddGrpcClient<UserPermissionsService.UserPermissionsServiceClient>(options =>
-            {
-                options.Address = new Uri(configuration["ExternalServices:UsersApi"]!);
-            }).AddResilienceHandler(nameof(HttpResiliencePipelineExtensions), pipeline => pipeline.ConfigureGrpcResilience());
+            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
+                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
+
+            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
 
             return services;
         }

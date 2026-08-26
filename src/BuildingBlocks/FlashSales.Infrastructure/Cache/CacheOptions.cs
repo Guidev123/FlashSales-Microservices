@@ -4,7 +4,7 @@ namespace FlashSales.Infrastructure.Cache
 {
     public static class CacheOptions
     {
-        private static readonly int _defaultExpirationTimeInMinutes = 30;
+        private static readonly int _defaultExpirationTimeInMinutes = 15;
 
         private static DistributedCacheEntryOptions DefaultExpiration
             => new()
