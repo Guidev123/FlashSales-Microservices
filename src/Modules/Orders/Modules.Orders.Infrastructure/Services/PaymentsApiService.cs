@@ -1,6 +1,8 @@
 ﻿using FlashSales.Domain.Results;
+using FlashSales.Infrastructure.Extensions;
 using Microsoft.Extensions.Logging;
 using Modules.Payments.Contracts;
+using System.Net.Http.Json;
 using static Modules.Payments.Contracts.IPaymentsPublicApi;
 
 namespace Modules.Orders.Infrastructure.Services
@@ -9,7 +11,11 @@ namespace Modules.Orders.Infrastructure.Services
     {
         public Task<Result<InitiateCheckoutResponse>> InitiateCheckoutAsync(InitiateCheckoutRequest request, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return client.PostAsJsonAsync
+                ("api/v1/payments/checkout",
+                request,
+                cancellationToken
+                ).ToResultAsync<InitiateCheckoutResponse>(logger, ct: cancellationToken);
         }
     }
 }

@@ -2,11 +2,12 @@
 using FlashSales.Application.Cache;
 using FlashSales.Domain.Results;
 using FlashSales.Users.Contracts.Protos;
+using Modules.Users.Contracts.Extensions;
 
 namespace Modules.Payments.Infrastructure.Authorization
 {
     internal sealed class PermissionService(
-        UserPermissionsService.UserPermissionsServiceClient permissionsServiceClient, 
+        UserPermissionsService.UserPermissionsServiceClient permissionsServiceClient,
         ICacheService cacheService
         ) : IPermissionService
     {
@@ -17,6 +18,11 @@ namespace Modules.Payments.Infrastructure.Authorization
             {
                 return cachedResult;
             }
+
+            var result = await permissionsServiceClient.GetUserPermissionsAsync(
+                identityId.MapToPermissionRequest(),
+                cancellationToken: cancellationToken
+                );
         }
     }
 }

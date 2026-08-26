@@ -112,7 +112,7 @@ namespace Modules.Orders.Infrastructure
                 ?? throw new NullReferenceException();
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
-            services.AddCustomHttpClientWithClientCredentialsAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
+            services.AddCustomHttpClientWithOnBehalfOfAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
 
             return services;
         }

@@ -1,6 +1,7 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Domain.Results;
 using Modules.Launches.Contracts;
+using Modules.Orders.Application.Orders.Mappers;
 using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Errors;
 using Modules.Orders.Domain.Orders.Models;
@@ -58,13 +59,13 @@ namespace Modules.Orders.Application.Orders.Sagas
                 return Result.Failure<string>(OrderErrors.ReservationFailed);
             }
 
-            var checkoutResult = await paymentsPublicApi.InitiateCheckoutAsync(
+            var checkoutResult = await paymentsPublicApi.InitiateCheckoutAsync(PaymentMappers.MapToRequest(
                 order.Id,
                 order.OrderCode,
                 order.TotalAmount,
                 customerId,
                 customerEmail,
-                items,
+                items),
                 cancellationToken);
 
             if (checkoutResult.IsFailure)
