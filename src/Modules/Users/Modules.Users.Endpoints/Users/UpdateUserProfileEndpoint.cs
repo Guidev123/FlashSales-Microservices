@@ -31,6 +31,7 @@ namespace Modules.Users.Endpoints.Users
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Accounts.UpdateOwn)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Update the authenticated user's profile")
               .WithDescription(
                   "Updates the full name and date of birth of the currently authenticated user. " +

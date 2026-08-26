@@ -26,6 +26,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(() => Results.Created(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Assign)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Assign a role to a user")
               .WithDescription(
                   "Grants the specified role to a user, both in the system and in the identity provider. " +

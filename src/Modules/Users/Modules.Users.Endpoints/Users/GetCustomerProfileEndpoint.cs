@@ -27,6 +27,7 @@ namespace Modules.Users.Endpoints.Users
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Accounts.CustomerReadOwn)
+              .RequireScope(UsersScopes.Read)
               .WithSummary("Get the authenticated customer's profile")
               .WithDescription(
                   "Returns the personal information of the currently authenticated customer, " +

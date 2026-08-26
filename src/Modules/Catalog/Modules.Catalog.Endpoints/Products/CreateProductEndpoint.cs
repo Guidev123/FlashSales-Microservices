@@ -34,6 +34,7 @@ namespace Modules.Catalog.Endpoints.Products
                 return result.Match(success => Results.Created($"/api/v1/products/{success.ProductId}", success), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(CatalogPermissions.Products.ProductsCreate)
+              .RequireScope(CatalogScopes.Write)
               .WithSummary("Create a new product")
               .WithDescription(
                   "Creates a new product in Draft status under the authenticated seller's catalog. " +

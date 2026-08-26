@@ -26,6 +26,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Configure)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Set the default role for a registration type")
               .WithDescription(
                   "Configures the given role to be automatically assigned to all new accounts of the specified registration type. " +

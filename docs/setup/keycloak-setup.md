@@ -93,20 +93,32 @@ Go to **Realm roles → Create role** and create the three roles below.
 
 ---
 
-## 5. Client Scope: `launches.stock.write`
+## 5. Client Scopes
 
-Go to **Client scopes → Create client scope**.
+Go to **Client scopes → Create client scope** and create each of the scopes below. All of them: Protocol `OpenID Connect`, Display on consent screen `OFF`, Include in token scope `ON`.
 
-| Field | Value |
-|---|---|
-| Name | `launches.stock.write` |
-| Description | Reserve and release launch stock on behalf of the order-creation saga |
-| Type | Optional |
-| Protocol | OpenID Connect |
-| Display on consent screen | OFF |
-| Include in token scope | ON |
+### Service-to-service
 
-Create any further service-to-service scope the same way, named `<service>.<capability>`.
+| Name | Type | Description |
+|---|---|---|
+| `launches.stock.write` | Optional | Reserve and release launch stock on behalf of the order-creation saga |
+
+Create any further service-to-service scope the same way, named `<service>.<capability>`, and register it as **Optional** on the calling service's client (§8).
+
+### Per-module read/write
+
+| Name | Type | Description |
+|---|---|---|
+| `catalog.read` | Default | Read access to the Catalog API |
+| `catalog.write` | Default | Write access to the Catalog API |
+| `launches.read` | Default | Read access to the Launches API |
+| `launches.write` | Default | Write access to the Launches API |
+| `orders.read` | Default | Read access to the Orders API |
+| `orders.write` | Default | Write access to the Orders API |
+| `users.read` | Default | Read access to the Users API |
+| `users.write` | Default | Write access to the Users API |
+
+These are assigned to `flash-sales-public` in §6, not created there — the client scope itself has no "Type" until it's attached to a client.
 
 ---
 
@@ -135,6 +147,10 @@ Go to **Clients → Create client**.
 | Valid redirect URIs | `http://localhost:3000/*` |
 | Valid post logout URIs | `http://localhost:3000/*` |
 | Web origins | `http://localhost:3000` |
+
+### Client Scopes
+
+Go to **Clients → flash-sales-public → Client scopes → Add client scope**, select all eight per-module scopes from §5 (`catalog.read`, `catalog.write`, `launches.read`, `launches.write`, `orders.read`, `orders.write`, `users.read`, `users.write`), and add them as **Default** — not Optional. Every token issued to the SPA needs to carry these automatically, without the frontend having to request them explicitly.
 
 ### Protocol Mappers
 
@@ -360,4 +376,5 @@ Verify under **Authentication → first broker login** that the authenticators a
 | Role `activated` | Realm role, checked on every request |
 | Roles `customer` / `seller` | Used only by `flash-sales-public` mappers |
 | Scope `launches.stock.write` | Optional, granted only to `flash-sales-orders-svc` |
+| Scopes `catalog.*`/`launches.*`/`orders.*`/`users.*` (`.read`/`.write`) | Default on `flash-sales-public` — every user token carries them |
 | Identity Providers | GitHub + Google with First Broker Login flow |

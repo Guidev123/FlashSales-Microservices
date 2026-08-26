@@ -31,6 +31,7 @@ namespace Modules.Users.Endpoints.Users
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization()
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Activate a customer account")
               .WithDescription(
                   "Completes the customer onboarding for the authenticated user by recording their date of birth. " +

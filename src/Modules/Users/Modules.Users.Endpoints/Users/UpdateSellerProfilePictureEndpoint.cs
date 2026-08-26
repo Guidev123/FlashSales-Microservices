@@ -33,6 +33,7 @@ namespace Modules.Users.Endpoints.Users
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Accounts.UpdateOwn)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Update the seller's profile picture")
               .WithDescription(
                   "Uploads a new profile picture for the currently authenticated seller. " +

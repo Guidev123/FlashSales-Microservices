@@ -28,7 +28,8 @@ namespace Modules.Launches.Endpoints.Launches
 
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-            .RequireAuthorization(LaunchesPermissions.Launches.Cancel);
+            .RequireAuthorization(LaunchesPermissions.Launches.Cancel)
+            .RequireScope(LaunchesScopes.Write);
         }
     }
 }

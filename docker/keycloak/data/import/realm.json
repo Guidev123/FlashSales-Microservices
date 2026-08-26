@@ -144,7 +144,13 @@
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:3000/*"
       },
-      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email"],
+      "defaultClientScopes": [
+        "web-origins", "acr", "profile", "roles", "basic", "email",
+        "catalog.read", "catalog.write",
+        "launches.read", "launches.write",
+        "orders.read", "orders.write",
+        "users.read", "users.write"
+      ],
       "optionalClientScopes": ["offline_access", "address", "phone", "microprofile-jwt", "organization"],
       "protocolMappers": [
         {
@@ -1077,6 +1083,86 @@
       "id": "8f2e6c1a-9d4b-4e7a-9c3f-1a5d7e6b2c40",
       "name": "launches.stock.write",
       "description": "Grants a trusted service the ability to reserve and release launch stock on behalf of the order-creation saga.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000001",
+      "name": "catalog.read",
+      "description": "Read access to the Catalog API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000002",
+      "name": "catalog.write",
+      "description": "Write access to the Catalog API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000003",
+      "name": "launches.read",
+      "description": "Read access to the Launches API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000004",
+      "name": "launches.write",
+      "description": "Write access to the Launches API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000005",
+      "name": "orders.read",
+      "description": "Read access to the Orders API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000006",
+      "name": "orders.write",
+      "description": "Write access to the Orders API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000007",
+      "name": "users.read",
+      "description": "Read access to the Users API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000008",
+      "name": "users.write",
+      "description": "Write access to the Users API.",
       "protocol": "openid-connect",
       "attributes": {
         "include.in.token.scope": "true",

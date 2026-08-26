@@ -23,6 +23,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(() => Results.Created(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Permissions.Create)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Create a new permission")
               .WithDescription(
                   "Registers a new permission code in the system. " +

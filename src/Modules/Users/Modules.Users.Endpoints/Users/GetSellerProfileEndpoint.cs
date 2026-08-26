@@ -26,6 +26,7 @@ namespace Modules.Users.Endpoints.Users
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Accounts.SellerReadOwn)
+              .RequireScope(UsersScopes.Read)
               .WithSummary("Get the authenticated seller's profile")
               .WithDescription(
                   "Returns the full profile of the currently authenticated seller, including personal information, " +

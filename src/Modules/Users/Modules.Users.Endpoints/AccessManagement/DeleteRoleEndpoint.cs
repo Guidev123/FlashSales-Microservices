@@ -24,6 +24,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Delete)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Delete a role")
               .WithDescription(
                   "Permanently deletes the role identified by name. " +

@@ -42,6 +42,7 @@ namespace Modules.Catalog.Endpoints.Products
             }).DisableAntiforgery()
               .WithTags(EndpointsModule.Module)
               .RequireAuthorization(CatalogPermissions.Products.ProductsUpdate)
+              .RequireScope(CatalogScopes.Write)
               .WithSummary("Upload a product image")
               .WithDescription(
                   "Uploads an image for the specified product and stores it in blob storage. " +

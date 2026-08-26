@@ -30,6 +30,7 @@ namespace Modules.Launches.Endpoints.Launches
                 return result.Match(Results.Ok, ApiResults.Problem);
             })
             .WithTags(EndpointsModule.Module)
+            .RequireScope(LaunchesScopes.Read)
             .WithSummary("Get all launches from a seller")
             .Produces<PagedResult<LaunchResponse>>(StatusCodes.Status200OK);
         }

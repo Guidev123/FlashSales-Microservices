@@ -30,6 +30,7 @@ namespace Modules.Catalog.Endpoints.Products
                 return result.Match(() => Results.NoContent(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(CatalogPermissions.Products.ProductsArchive)
+              .RequireScope(CatalogScopes.Write)
               .WithSummary("Archive a product")
               .WithDescription(
                   "Transitions an Active product to Archived status, removing it from the customer-facing catalog. " +

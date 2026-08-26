@@ -34,7 +34,8 @@ namespace Modules.Launches.Endpoints.Launches
 
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
-            .RequireAuthorization(LaunchesPermissions.Launches.Schedule);
+            .RequireAuthorization(LaunchesPermissions.Launches.Schedule)
+            .RequireScope(LaunchesScopes.Write);
         }
 
         record ScheduleLaunchRequest(

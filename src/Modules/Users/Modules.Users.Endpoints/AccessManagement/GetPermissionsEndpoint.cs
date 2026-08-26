@@ -22,6 +22,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(() => Results.Ok(result.Value), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization()
+              .RequireScope(UsersScopes.Read)
               .WithSummary("Get the authenticated user's permissions")
               .WithDescription(
                   "Returns the internal user ID and the complete list of roles with their associated permissions " +

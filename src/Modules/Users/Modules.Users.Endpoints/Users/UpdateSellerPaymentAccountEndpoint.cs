@@ -32,6 +32,7 @@ namespace Modules.Users.Endpoints.Users
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Accounts.UpdateOwn)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Update the seller's payment account")
               .WithDescription(
                   "Replaces the bank details of the currently authenticated seller. " +

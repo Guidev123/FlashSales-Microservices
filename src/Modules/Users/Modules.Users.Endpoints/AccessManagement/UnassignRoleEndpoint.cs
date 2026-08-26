@@ -25,6 +25,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                 return result.Match(Results.NoContent, ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Unassign)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Remove a role from a user")
               .WithDescription("Revokes the specified role from the user in both the system and the identity provider.")
               .Produces(StatusCodes.Status204NoContent)

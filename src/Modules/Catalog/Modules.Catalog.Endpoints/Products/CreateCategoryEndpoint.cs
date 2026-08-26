@@ -23,6 +23,7 @@ namespace Modules.Catalog.Endpoints.Products
                     result.Value.Id), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(CatalogPermissions.Products.CategoriesCreate)
+              .RequireScope(CatalogScopes.Write)
               .WithSummary("Create a new product category")
               .WithDescription("Creates a new category that products can be associated with. Category names must be unique.")
               .Produces<Guid>(StatusCodes.Status201Created)

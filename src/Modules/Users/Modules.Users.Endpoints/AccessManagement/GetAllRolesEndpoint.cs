@@ -28,6 +28,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                     ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Read)
+              .RequireScope(UsersScopes.Read)
               .WithSummary("List all roles")
               .WithDescription(
                   "Returns a paginated list of all roles defined in the system. " +

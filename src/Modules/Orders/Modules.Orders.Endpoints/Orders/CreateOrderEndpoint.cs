@@ -34,6 +34,7 @@ namespace Modules.Orders.Endpoints.Orders
                 return result.Match(success => Results.Ok(success), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(OrdersPermissions.Orders.Create)
+              .RequireScope(OrdersScopes.Write)
               .WithSummary("Create an order for a Launch")
               .WithDescription(
                   "Reserves stock for the given Launch and starts a checkout session with the payment gateway. " +

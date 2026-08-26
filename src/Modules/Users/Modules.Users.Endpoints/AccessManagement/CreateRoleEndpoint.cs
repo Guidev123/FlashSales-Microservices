@@ -25,6 +25,7 @@ namespace Modules.Users.Endpoints.AccessManagement
                     ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(UsersPermissions.Roles.Create)
+              .RequireScope(UsersScopes.Write)
               .WithSummary("Create a new role")
               .WithDescription(
                   "Creates a new role in the system. Role names must be unique and are used as identifiers " +

@@ -30,6 +30,7 @@ namespace Modules.Catalog.Endpoints.Products
                 return result.Match(() => Results.NoContent(), ApiResults.Problem);
             }).WithTags(EndpointsModule.Module)
               .RequireAuthorization(CatalogPermissions.Products.ProductsActivate)
+              .RequireScope(CatalogScopes.Write)
               .WithSummary("Activate a product")
               .WithDescription(
                   "Transitions a product from Draft to Active status, making it visible to customers. " +
