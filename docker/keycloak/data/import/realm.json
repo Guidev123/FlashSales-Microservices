@@ -361,7 +361,97 @@
       "serviceAccountsEnabled": true,
       "authorizationServicesEnabled": false,
       "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
-      "optionalClientScopes": ["launches.stock.write"]
+      "optionalClientScopes": ["launches.stock.write", "users.permissions.read"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000101",
+          "name": "audience-launches",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-launches",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000102",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "id": "b2c3d4e5-3000-3000-3000-000000000004",
+      "clientId": "flash-sales-catalog-svc",
+      "name": "Catalog service account",
+      "description": "Confidential client used only by the Catalog service (client_credentials) to call other microservices — currently the Users gRPC permissions lookup. Never used by a human.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-catalog-svc-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": ["users.permissions.read"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000104",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "id": "b2c3d4e5-3000-3000-3000-000000000005",
+      "clientId": "flash-sales-launches-svc",
+      "name": "Launches service account",
+      "description": "Confidential client used only by the Launches service (client_credentials) to call other microservices — currently the Users gRPC permissions lookup. Never used by a human.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-launches-svc-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": ["users.permissions.read"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000105",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     },
     {
       "id": "b2c3d4e5-3000-3000-3000-000000000003",

@@ -1,5 +1,6 @@
 using Azure.Messaging.ServiceBus;
 using Azure.Storage.Blobs;
+using FlashSales.Application.Authorization;
 using FlashSales.Infrastructure.Factories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -8,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Modules.Catalog.Infrastructure.Database;
-using Modules.Users.Infrastructure.Database;
 using Npgsql;
 using DotNet.Testcontainers.Builders;
 using Testcontainers.Azurite;
@@ -21,25 +21,25 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
     {
         private const string BlobContainerName = "catalog-test";
 
-        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .WithDatabase("flashsales_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        private readonly AzuriteContainer _azuriteContainer = new AzuriteBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
+        private readonly AzuriteContainer _azuriteContainer = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(10000))
             .WithCommand("--skipApiVersionCheck")
             .Build();
 
-        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder()
+        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
             .WithAcceptLicenseAgreement(true)
             .WithResourceMapping(
                 new FileInfo(Path.Combine(AppContext.BaseDirectory, "Abstractions", "servicebus.config.json")),
                 new FileInfo("/ServiceBus_Emulator/ConfigFiles/Config.json"))
             .Build();
+
+        internal FakePermissionService PermissionService { get; } = new();
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -56,6 +56,8 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
             builder.UseSetting("Users:KeyCloak:ConfidentialClientId", "test-client");
             builder.UseSetting("Users:KeyCloak:ConfidentialClientSecret", "test-secret");
 
+            builder.UseSetting("ApiOptions:UsersApi:Scope", "users.permissions.read");
+
             builder.ConfigureAppConfiguration(cfg =>
                 cfg.AddJsonFile(
                     Path.Combine(AppContext.BaseDirectory, "modules.catalog.Testing.json"),
@@ -67,6 +69,7 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
                 ReplaceServiceBusClient(services);
                 ReplaceSqlConnectionFactory(services);
                 ReplaceBlobServiceClient(services);
+                ReplacePermissionService(services);
             });
         }
 
@@ -98,6 +101,8 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
 
         public async Task ResetDatabaseAsync()
         {
+            PermissionService.Reset();
+
             await using var connection = new NpgsqlConnection(_postgresContainer.GetConnectionString());
             await connection.OpenAsync();
 
@@ -152,13 +157,19 @@ namespace Modules.Catalog.IntegrationTests.Abstractions
             services.AddSingleton(new BlobServiceClient(_azuriteContainer.GetConnectionString()));
         }
 
+        private void ReplacePermissionService(IServiceCollection services)
+        {
+            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IPermissionService));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddSingleton<IPermissionService>(PermissionService);
+        }
+
         private async Task MigrateAsync()
         {
             using var scope = Services.CreateScope();
-            var sp = scope.ServiceProvider;
-
-            await sp.GetRequiredService<UsersDbContext>().Database.MigrateAsync();
-            await sp.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
         }
 
         private async Task CreateBlobContainerAsync()

@@ -55,7 +55,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         public async Task CompensateStaleOrderCreationSagaCommand_SimulatingSweepJobBehavior_ShouldCompensateStaleSaga()
         {
             // Arrange
-            var (launch, _, orderId) = await OrderHelper.CreateStuckAtInitiatingCheckoutAsync(
+            var (_, _, orderId) = await OrderHelper.CreateStuckAtInitiatingCheckoutAsync(
                 _factory, _faker, launchTotalQuantity: 5, quantity: 2);
             await ForceSagaCreatedOnAsync(orderId, DateTimeOffset.UtcNow.AddHours(-1));
 
@@ -72,9 +72,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
 
             var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
             order.Status.Should().Be(OrderStatus.Cancelled);
-
-            var realLaunch = await _launchesDbContext.Launches.FirstAsync(l => l.Id == launch.LaunchId);
-            realLaunch.Stock!.ReservedQuantity.Should().Be(0);
         }
 
         private async Task ForceSagaCreatedOnAsync(Guid sagaId, DateTimeOffset createdOn)

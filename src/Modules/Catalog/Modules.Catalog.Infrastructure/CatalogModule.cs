@@ -1,7 +1,10 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
+using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +14,10 @@ using Modules.Catalog.Contracts;
 using Modules.Catalog.Domain.Products.Repositories;
 using Modules.Catalog.Domain.Sellers.Repositories;
 using Modules.Catalog.Endpoints;
+using Modules.Catalog.Infrastructure.Authorization;
 using Modules.Catalog.Infrastructure.Database;
 using Modules.Catalog.Infrastructure.Database.Repositories;
+using Modules.Catalog.Infrastructure.Options;
 using Modules.Catalog.Infrastructure.PublicApi;
 using System.Reflection;
 
@@ -35,7 +40,9 @@ namespace Modules.Catalog.Infrastructure
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
-                .AddPublicApi();
+                .AddPublicApi()
+                .AddServices()
+                .AddGrpcServices(configuration);
 
             return services;
         }
@@ -84,6 +91,22 @@ namespace Modules.Catalog.Infrastructure
         private static IServiceCollection AddPublicApi(this IServiceCollection services)
         {
             services.AddTransient<ICatalogPublicApi, CatalogPublicApi>();
+            return services;
+        }
+
+        private static IServiceCollection AddServices(this IServiceCollection services)
+        {
+            services.AddTransient<IPermissionService, PermissionService>();
+            return services;
+        }
+
+        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
+                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
+
+            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
+
             return services;
         }
     }

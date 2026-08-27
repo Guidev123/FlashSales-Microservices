@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Modules.Catalog.Infrastructure.Database;
 using Modules.Users.Infrastructure.Database;
 using Modules.Users.Infrastructure.Identity;
 using Modules.Users.IntegrationTests.Abstractions.Files;
@@ -32,15 +31,13 @@ namespace Modules.Users.IntegrationTests.Abstractions
 
         private string _confidentialClientSecret = string.Empty;
 
-        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .WithDatabase("flashsales_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        private readonly KeycloakContainer _keycloakContainer = new KeycloakBuilder()
-            .WithImage("quay.io/keycloak/keycloak:26.6.1")
+        private readonly KeycloakContainer _keycloakContainer = new KeycloakBuilder("quay.io/keycloak/keycloak:26.6.1")
             .WithUsername(KeycloakAdminUser)
             .WithPassword(KeycloakAdminPassword)
             .WithResourceMapping(
@@ -49,13 +46,12 @@ namespace Modules.Users.IntegrationTests.Abstractions
             .WithCommand("--import-realm")
             .Build();
 
-        private readonly AzuriteContainer _azuriteContainer = new AzuriteBuilder()
-            .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
+        private readonly AzuriteContainer _azuriteContainer = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(10000))
             .WithCommand("--skipApiVersionCheck")
             .Build();
 
-        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder()
+        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
             .WithAcceptLicenseAgreement(true)
             .WithResourceMapping(
                 new FileInfo(Path.Combine(AppContext.BaseDirectory, "Abstractions", "servicebus.config.json")),
@@ -64,6 +60,8 @@ namespace Modules.Users.IntegrationTests.Abstractions
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseContentRoot(AppContext.BaseDirectory);
+
             string keycloakAddress = _keycloakContainer.GetBaseAddress();
             string realmUrl = $"{keycloakAddress}realms/{RealmName}";
 
@@ -196,7 +194,6 @@ namespace Modules.Users.IntegrationTests.Abstractions
             var sp = scope.ServiceProvider;
 
             await sp.GetRequiredService<UsersDbContext>().Database.MigrateAsync();
-            await sp.GetRequiredService<CatalogDbContext>().Database.MigrateAsync();
 
             await SeedRolesAsync();
         }

@@ -1,6 +1,7 @@
 ﻿using Grpc.Net.ClientFactory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FlashSales.Infrastructure.Http
 {
@@ -14,6 +15,7 @@ namespace FlashSales.Infrastructure.Http
             where TService : class, TInterface
         {
             services.AddClientCredentials(configuration);
+            services.AddSharedDelegatingHandlers();
 
             services.AddHttpClient<TInterface, TService>(client =>
             {
@@ -43,6 +45,7 @@ namespace FlashSales.Infrastructure.Http
                 throw new InvalidOperationException($"'{nameof(HttpOptions.Audience)}' must be configured for an on-behalf-of HTTP client.");
 
             services.AddOnBehalfOf(configuration);
+            services.AddSharedDelegatingHandlers();
 
             services.AddHttpClient<TInterface, TService>(client =>
             {
@@ -68,6 +71,7 @@ namespace FlashSales.Infrastructure.Http
             ) where TClient : class
         {
             services.AddClientCredentials(configuration);
+            services.AddSharedDelegatingHandlers();
 
             services.AddGrpcClient<TClient>(client =>
             {
@@ -82,6 +86,13 @@ namespace FlashSales.Infrastructure.Http
                 pipeline.ConfigureResilience(options);
             });
 
+            return services;
+        }
+
+        private static IServiceCollection AddSharedDelegatingHandlers(this IServiceCollection services)
+        {
+            services.TryAddTransient<LoggingDelegatingHandler>();
+            services.TryAddTransient<ExceptionTranslationDelegatingHandler>();
             return services;
         }
     }

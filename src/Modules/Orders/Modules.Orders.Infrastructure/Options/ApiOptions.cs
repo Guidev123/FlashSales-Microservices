@@ -8,5 +8,6 @@ namespace Modules.Orders.Infrastructure.Options
 
         public HttpOptions LaunchesApi { get; set; } = null!;
         public HttpOptions PaymentsApi { get; set; } = null!;
+        public HttpOptions UsersApi { get; set; } = null!;
     }
 }

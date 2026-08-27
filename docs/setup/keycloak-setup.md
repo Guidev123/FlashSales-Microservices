@@ -252,7 +252,21 @@ No redirect URIs, mappers, or credentials needed on these clients.
 
 ### Client Scopes
 
-Go to **Clients → flash-sales-orders-svc → Client scopes → Add client scope**, select `launches.stock.write` (§5), and add it as **Optional**.
+Go to **Clients → flash-sales-orders-svc → Client scopes → Add client scope**, select `launches.stock.write` and `users.permissions.read` (§5), and add both as **Optional**.
+
+### Protocol Mappers
+
+Go to **Clients → flash-sales-orders-svc → Client scopes → flash-sales-orders-svc-dedicated → Add mapper → By configuration**, and create both mappers below:
+
+| Field | Value (repeat per audience) |
+|---|---|
+| Mapper type | Audience |
+| Name | `audience-launches`, `audience-users` |
+| Included Client Audience | `flash-sales-launches`, `flash-sales-users` (matching the name) |
+| Add to ID token | OFF |
+| Add to access token | ON |
+
+Both are required, not optional — without them the token this client gets from `client_credentials` won't carry the target service as audience, and that service will reject it at authentication.
 
 ### Credentials
 
@@ -266,7 +280,99 @@ ClientCredentials__ClientSecret=<secret>
 
 ---
 
-## 9. Client: `flash-sales-payments-svc` (Payments service account)
+## 9. Client: `flash-sales-catalog-svc` (Catalog service account)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-catalog-svc` |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | ON (confidential client) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Service accounts roles | ON |
+
+### Client Scopes
+
+Go to **Clients → flash-sales-catalog-svc → Client scopes → Add client scope**, select `users.permissions.read` (§5), and add it as **Optional**.
+
+### Protocol Mappers
+
+Go to **Clients → flash-sales-catalog-svc → Client scopes → flash-sales-catalog-svc-dedicated → Add mapper → By configuration**.
+
+| Field | Value |
+|---|---|
+| Mapper type | Audience |
+| Name | `audience-users` |
+| Included Client Audience | `flash-sales-users` |
+| Add to ID token | OFF |
+| Add to access token | ON |
+
+This is required, not optional — without it the token this client gets from `client_credentials` won't carry `flash-sales-users` as audience, and the Users gRPC service will reject it at authentication.
+
+### Credentials
+
+Go to **Clients → flash-sales-catalog-svc → Credentials**, copy the **Client secret**, and set it in the Catalog service's configuration:
+
+```
+ClientCredentials__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__ClientId=flash-sales-catalog-svc
+ClientCredentials__ClientSecret=<secret>
+```
+
+---
+
+## 10. Client: `flash-sales-launches-svc` (Launches service account)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-launches-svc` |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | ON (confidential client) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Service accounts roles | ON |
+
+### Client Scopes
+
+Go to **Clients → flash-sales-launches-svc → Client scopes → Add client scope**, select `users.permissions.read` (§5), and add it as **Optional**.
+
+### Protocol Mappers
+
+Go to **Clients → flash-sales-launches-svc → Client scopes → flash-sales-launches-svc-dedicated → Add mapper → By configuration**.
+
+| Field | Value |
+|---|---|
+| Mapper type | Audience |
+| Name | `audience-users` |
+| Included Client Audience | `flash-sales-users` |
+| Add to ID token | OFF |
+| Add to access token | ON |
+
+This is required, not optional — without it the token this client gets from `client_credentials` won't carry `flash-sales-users` as audience, and the Users gRPC service will reject it at authentication.
+
+### Credentials
+
+Go to **Clients → flash-sales-launches-svc → Credentials**, copy the **Client secret**, and set it in the Launches service's configuration:
+
+```
+ClientCredentials__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__ClientId=flash-sales-launches-svc
+ClientCredentials__ClientSecret=<secret>
+```
+
+---
+
+## 11. Client: `flash-sales-payments-svc` (Payments service account)
 
 ### General Settings
 | Field | Value |
@@ -312,7 +418,7 @@ ClientCredentials__ClientSecret=<secret>
 
 ---
 
-## 10. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
+## 12. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
 
 ### General Settings
 | Field | Value |
@@ -349,7 +455,7 @@ KeyCloak__CurrentRealm=flash-sales-dev
 
 ---
 
-## 11. Identity Providers
+## 13. Identity Providers
 
 ### GitHub
 
@@ -387,7 +493,7 @@ http://localhost:8080/realms/flash-sales-dev/broker/google/endpoint
 
 ---
 
-## 12. First Broker Login Flow (Account Linking)
+## 14. First Broker Login Flow (Account Linking)
 
 Verify under **Authentication → first broker login** that the authenticators are configured as follows:
 
@@ -402,14 +508,14 @@ Verify under **Authentication → first broker login** that the authenticators a
 
 ---
 
-## 13. Theme
+## 15. Theme
 
 1. Mount `docker/keycloak/themes/flash-sales` into the Keycloak container.
 2. Go to **Realm Settings → Themes → Login theme** and select `flash-sales`.
 
 ---
 
-## 14. Summary
+## 16. Summary
 
 | Component | Value |
 |---|---|
@@ -418,11 +524,11 @@ Verify under **Authentication → first broker login** that the authenticators a
 | Duplicate emails | OFF |
 | User client | `flash-sales-public` |
 | Resource-server clients | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` |
-| Service clients | `flash-sales-orders-svc` (holds `launches.stock.write`), `flash-sales-payments-svc` (holds `users.permissions.read`, audience mapped to `flash-sales-users`) |
+| Service clients | `flash-sales-orders-svc` (holds `launches.stock.write` + `users.permissions.read`, audience mapped to `flash-sales-launches` and `flash-sales-users`), `flash-sales-catalog-svc` / `flash-sales-launches-svc` / `flash-sales-payments-svc` (each holds `users.permissions.read`, audience mapped to `flash-sales-users`) |
 | Admin client | `flash-sales-users-admin` — holds `manage-users`/`view-users` |
 | Role `activated` | Realm role, checked on every request |
 | Roles `customer` / `seller` | Used only by `flash-sales-public` mappers |
 | Scope `launches.stock.write` | Optional, granted only to `flash-sales-orders-svc` |
-| Scope `users.permissions.read` | Optional, granted only to `flash-sales-payments-svc` |
+| Scope `users.permissions.read` | Optional, granted to `flash-sales-orders-svc`, `flash-sales-catalog-svc`, `flash-sales-launches-svc`, `flash-sales-payments-svc` — every service that needs to resolve a caller's permissions |
 | Scopes `catalog.*`/`launches.*`/`orders.*`/`users.*` (`.read`/`.write`) | Default on `flash-sales-public` — every user token carries them |
 | Identity Providers | GitHub + Google with First Broker Login flow |

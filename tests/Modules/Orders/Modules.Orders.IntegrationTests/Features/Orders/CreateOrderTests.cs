@@ -1,11 +1,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using FlashSales.Domain.Results;
 using MidR.Interfaces;
-using Modules.Launches.Application.Launches.Features.ReserveStock;
-using Modules.Launches.Domain.Launches.Enums;
-using Modules.Launches.Domain.Launches.Errors;
 using Modules.Orders.Application.Launches.Features.End;
 using Modules.Orders.Application.Orders.Features.Confirm;
 using Modules.Orders.Application.Orders.Features.Create;
@@ -14,6 +10,7 @@ using Modules.Orders.Domain.Orders.Errors;
 using Modules.Orders.Domain.Orders.Models;
 using Modules.Orders.IntegrationTests.Abstractions;
 using Modules.Orders.IntegrationTests.Abstractions.Helpers;
+using System.Net;
 
 namespace Modules.Orders.IntegrationTests.Features.Orders
 {
@@ -42,9 +39,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             var order = await _dbContext.Orders.FirstAsync(o => o.Id == result.Value.OrderId);
             order.Status.Should().Be(OrderStatus.PaymentProcessing);
             order.Quantity.Should().Be(2);
-
-            var realLaunch = await _launchesDbContext.Launches.FirstAsync(l => l.Id == launch.LaunchId);
-            realLaunch.Stock!.ReservedQuantity.Should().Be(2);
         }
 
         [Fact]
@@ -130,7 +124,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         {
             // Arrange
             var launch = await LaunchHelper.CreateActiveAsync(_factory, _faker, totalQuantity: 1);
-            await SendInNewScopeAsync(new ReserveStockCommand(launch.LaunchId, Guid.NewGuid(), Quantity: 1));
+            _factory.StubLaunchesReserveFailure(HttpStatusCode.Conflict, "Insufficient stock");
 
             var customerId = Guid.NewGuid();
 
@@ -139,7 +133,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
 
             // Assert
             result.IsFailure.Should().BeTrue();
-            result.Error!.Code.Should().Be(LaunchErrors.InsufficientStock.Code);
+            result.Error!.Code.Should().Be("Http.Conflict");
 
             var order = await _dbContext.Orders.FirstAsync(o => o.CustomerId == customerId && o.LaunchId == launch.LaunchId);
             order.Status.Should().Be(OrderStatus.Cancelled);
@@ -153,7 +147,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         {
             // Arrange
             var launch = await LaunchHelper.CreateActiveAsync(_factory, _faker, totalQuantity: 5);
-            _factory.PaymentGateway.EnqueueCheckoutFailure(Error.Problem("Payments.Test", "Simulated gateway outage"));
+            _factory.StubPaymentsCheckoutFailure(HttpStatusCode.BadRequest, "Simulated gateway outage");
 
             var customerId = Guid.NewGuid();
 
@@ -168,9 +162,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
 
             var saga = await _dbContext.OrderCreationSagas.FirstAsync(s => s.Id == order.Id);
             saga.Step.Should().Be(OrderCreationSagaStep.Compensated);
-
-            var realLaunch = await _launchesDbContext.Launches.FirstAsync(l => l.Id == launch.LaunchId);
-            realLaunch.Stock!.ReservedQuantity.Should().Be(0);
         }
 
         [Fact]
@@ -200,40 +191,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
 
             var orderCount = await _dbContext.Orders.CountAsync(o => o.CustomerId == customerId && o.LaunchId == launch.LaunchId);
             orderCount.Should().Be(1);
-        }
-
-        [Fact]
-        public async Task CreateOrder_WhenTwoConcurrentOrdersFromDifferentCustomersCompeteForLastUnit_OnlyOneShouldSucceedAndStockIsNotOversold()
-        {
-            // Arrange
-            var launch = await LaunchHelper.CreateActiveAsync(_factory, _faker, totalQuantity: 1);
-            var customer1 = Guid.NewGuid();
-            var customer2 = Guid.NewGuid();
-
-            await using var scope1 = _factory.Services.CreateAsyncScope();
-            await using var scope2 = _factory.Services.CreateAsyncScope();
-
-            var mediator1 = scope1.ServiceProvider.GetRequiredService<IMediator>();
-            var mediator2 = scope2.ServiceProvider.GetRequiredService<IMediator>();
-
-            // Act
-            var task1 = mediator1.SendAsync(new CreateOrderCommand(customer1, _faker.Internet.Email(), launch.LaunchId, 1));
-            var task2 = mediator2.SendAsync(new CreateOrderCommand(customer2, _faker.Internet.Email(), launch.LaunchId, 1));
-
-            var results = await Task.WhenAll(task1, task2);
-
-            // Assert
-            results.Count(r => r.IsSuccess).Should().Be(1);
-            results.Count(r => r.IsFailure).Should().Be(1);
-
-            var orders = await _dbContext.Orders.Where(o => o.LaunchId == launch.LaunchId).ToListAsync();
-            orders.Should().HaveCount(2);
-            orders.Count(o => o.Status == OrderStatus.PaymentProcessing).Should().Be(1);
-            orders.Count(o => o.Status == OrderStatus.Cancelled).Should().Be(1);
-
-            var realLaunch = await _launchesDbContext.Launches.FirstAsync(l => l.Id == launch.LaunchId);
-            realLaunch.Stock!.ReservedQuantity.Should().Be(1);
-            realLaunch.Status.Should().Be(LaunchStatus.SoldOut);
         }
     }
 }

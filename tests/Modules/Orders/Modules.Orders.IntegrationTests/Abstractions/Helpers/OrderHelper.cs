@@ -2,7 +2,6 @@ using Bogus;
 using FlashSales.Domain.Results;
 using Microsoft.Extensions.DependencyInjection;
 using MidR.Interfaces;
-using Modules.Launches.Application.Launches.Features.ReserveStock;
 using Modules.Orders.Application.Orders.Features.Create;
 using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Models;
@@ -49,33 +48,23 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
             IntegrationWebApplicationFactory factory,
             Faker faker,
             int launchTotalQuantity = 10,
-            int quantity = 1,
-            bool reserveRealStock = true)
+            int quantity = 1)
         {
             var launch = await LaunchHelper.CreateActiveAsync(factory, faker, launchTotalQuantity);
             var customerId = Guid.NewGuid();
 
-            await using (var scope = factory.Services.CreateAsyncScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+            await using var scope = factory.Services.CreateAsyncScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
 
-                var order = Order.Create(customerId, launch.LaunchId, launch.SellerId, launch.ProductId, quantity, launch.DiscountedPrice);
-                var saga = OrderCreationSaga.Create(order.Id);
-                saga.MarkStockReserved();
+            var order = Order.Create(customerId, launch.LaunchId, launch.SellerId, launch.ProductId, quantity, launch.DiscountedPrice);
+            var saga = OrderCreationSaga.Create(order.Id);
+            saga.MarkStockReserved();
 
-                dbContext.Orders.Add(order);
-                dbContext.OrderCreationSagas.Add(saga);
-                await dbContext.SaveChangesAsync();
+            dbContext.Orders.Add(order);
+            dbContext.OrderCreationSagas.Add(saga);
+            await dbContext.SaveChangesAsync();
 
-                if (reserveRealStock)
-                {
-                    await using var reserveScope = factory.Services.CreateAsyncScope();
-                    var mediator = reserveScope.ServiceProvider.GetRequiredService<IMediator>();
-                    await mediator.SendAsync(new ReserveStockCommand(launch.LaunchId, order.Id, quantity));
-                }
-
-                return (launch, customerId, order.Id);
-            }
+            return (launch, customerId, order.Id);
         }
     }
 }

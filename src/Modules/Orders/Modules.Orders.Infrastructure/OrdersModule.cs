@@ -1,9 +1,10 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
-using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +14,7 @@ using Modules.Orders.Application.Orders.Services;
 using Modules.Orders.Domain.Launches.Repositories;
 using Modules.Orders.Domain.Orders.Repositories;
 using Modules.Orders.Endpoints;
+using Modules.Orders.Infrastructure.Authorization;
 using Modules.Orders.Infrastructure.Database;
 using Modules.Orders.Infrastructure.Database.Repositories;
 using Modules.Orders.Infrastructure.Jobs;
@@ -34,14 +36,15 @@ namespace Modules.Orders.Infrastructure
         public static IServiceCollection AddOrdersModule(this IServiceCollection services, IConfiguration configuration)
         {
             services
-                .AddInfrastructureModule(configuration, Assemblies)
                 .AddData(configuration)
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
                 .AddJobs(configuration)
                 .AddApiServices(configuration)
-                .AddSagasOrchestrators();
+                .AddSagasOrchestrators()
+                .AddServices()
+                .AddGrpcServices(configuration);
 
             return services;
         }
@@ -113,6 +116,22 @@ namespace Modules.Orders.Infrastructure
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
             services.AddCustomHttpClientWithOnBehalfOfAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
+
+            return services;
+        }
+
+        private static IServiceCollection AddServices(this IServiceCollection services)
+        {
+            services.AddTransient<IPermissionService, PermissionService>();
+            return services;
+        }
+
+        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
+                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
+
+            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
 
             return services;
         }

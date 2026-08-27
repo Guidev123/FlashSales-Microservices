@@ -1,5 +1,6 @@
 using Azure.Messaging.ServiceBus;
 using DotNet.Testcontainers.Builders;
+using FlashSales.Application.Authorization;
 using FlashSales.Infrastructure.Factories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -16,22 +17,25 @@ namespace Modules.Launches.IntegrationTests.Abstractions
 {
     public class IntegrationWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
-        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:16-alpine")
+        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
             .WithDatabase("flashsales_test")
             .WithUsername("postgres")
             .WithPassword("postgres")
             .Build();
 
-        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder()
+        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
             .WithAcceptLicenseAgreement(true)
             .WithResourceMapping(
                 new FileInfo(Path.Combine(AppContext.BaseDirectory, "Abstractions", "servicebus.config.json")),
                 new FileInfo("/ServiceBus_Emulator/ConfigFiles/Config.json"))
             .Build();
 
+        internal FakePermissionService PermissionService { get; } = new();
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
+            builder.UseContentRoot(AppContext.BaseDirectory);
+
             builder.UseSetting("ConnectionStrings:Postgres", _postgresContainer.GetConnectionString());
             builder.UseSetting("Authentication:MetadataAddress",
                 "https://test.auth/.well-known/openid-configuration");
@@ -43,6 +47,8 @@ namespace Modules.Launches.IntegrationTests.Abstractions
             builder.UseSetting("Users:KeyCloak:ConfidentialClientId", "test-client");
             builder.UseSetting("Users:KeyCloak:ConfidentialClientSecret", "test-secret");
 
+            builder.UseSetting("ApiOptions:UsersApi:Scope", "users.permissions.read");
+
             builder.ConfigureAppConfiguration(cfg =>
                 cfg.AddJsonFile(
                     Path.Combine(AppContext.BaseDirectory, "modules.launches.Testing.json"),
@@ -53,6 +59,7 @@ namespace Modules.Launches.IntegrationTests.Abstractions
                 RemoveHostedServices(services);
                 ReplaceServiceBusClient(services);
                 ReplaceSqlConnectionFactory(services);
+                ReplacePermissionService(services);
             });
         }
 
@@ -77,6 +84,8 @@ namespace Modules.Launches.IntegrationTests.Abstractions
 
         public async Task ResetDatabaseAsync()
         {
+            PermissionService.Reset();
+
             await using var connection = new NpgsqlConnection(_postgresContainer.GetConnectionString());
             await connection.OpenAsync();
 
@@ -119,6 +128,15 @@ namespace Modules.Launches.IntegrationTests.Abstractions
                 services.Remove(descriptor);
 
             services.AddSingleton(new SqlConnectionFactory(_postgresContainer.GetConnectionString()));
+        }
+
+        private void ReplacePermissionService(IServiceCollection services)
+        {
+            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IPermissionService));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddSingleton<IPermissionService>(PermissionService);
         }
 
         private async Task MigrateAsync()

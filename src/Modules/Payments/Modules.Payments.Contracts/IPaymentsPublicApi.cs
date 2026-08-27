@@ -13,8 +13,7 @@ namespace Modules.Payments.Contracts
             Guid OrderId,
             string OrderCode,
             decimal Amount,
-            IReadOnlyCollection<CheckoutLineItem> Items,
-            CancellationToken CancellationToken = default
+            IReadOnlyCollection<CheckoutLineItem> Items
             );
         public sealed record InitiateCheckoutResponse(
             Guid PaymentId,

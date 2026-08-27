@@ -1,7 +1,10 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
+using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +12,11 @@ using Modules.Launches.Application.Launches.Services;
 using Modules.Launches.Domain.Launches.Repositories;
 using Modules.Launches.Domain.Sellers.Repositories;
 using Modules.Launches.Endpoints;
+using Modules.Launches.Infrastructure.Authorization;
 using Modules.Launches.Infrastructure.Database;
 using Modules.Launches.Infrastructure.Database.Repositories;
 using Modules.Launches.Infrastructure.Jobs;
+using Modules.Launches.Infrastructure.Options;
 using System.Reflection;
 
 namespace Modules.Launches.Infrastructure
@@ -34,7 +39,9 @@ namespace Modules.Launches.Infrastructure
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
-                .AddJobs(configuration);
+                .AddJobs(configuration)
+                .AddServices()
+                .AddGrpcServices(configuration);
 
             return services;
         }
@@ -85,6 +92,22 @@ namespace Modules.Launches.Infrastructure
             services.Configure<LaunchesJobsOptions>(configuration.GetSection(LaunchesJobsOptions.SectionName));
             services.AddHostedService<LaunchActivatorJob>();
             services.AddHostedService<LaunchEnderJob>();
+            return services;
+        }
+
+        private static IServiceCollection AddServices(this IServiceCollection services)
+        {
+            services.AddTransient<IPermissionService, PermissionService>();
+            return services;
+        }
+
+        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
+                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
+
+            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
+
             return services;
         }
     }

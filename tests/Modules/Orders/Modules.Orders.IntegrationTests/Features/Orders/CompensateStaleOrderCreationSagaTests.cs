@@ -21,7 +21,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         public async Task Compensate_WhenSagaIsInitiatingCheckout_ShouldReleaseStockCancelOrderAndMarkSagaCompensated()
         {
             // Arrange
-            var (launch, _, orderId) = await OrderHelper.CreateStuckAtInitiatingCheckoutAsync(
+            var (_, _, orderId) = await OrderHelper.CreateStuckAtInitiatingCheckoutAsync(
                 _factory, _faker, launchTotalQuantity: 5, quantity: 2);
 
             // Act
@@ -35,9 +35,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
 
             var saga = await _dbContext.OrderCreationSagas.FirstAsync(s => s.Id == orderId);
             saga.Step.Should().Be(OrderCreationSagaStep.Compensated);
-
-            var realLaunch = await _launchesDbContext.Launches.FirstAsync(l => l.Id == launch.LaunchId);
-            realLaunch.Stock!.ReservedQuantity.Should().Be(0);
         }
 
         [Fact]
