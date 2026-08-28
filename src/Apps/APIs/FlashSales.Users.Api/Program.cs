@@ -1,10 +1,16 @@
 using FlashSales.Infrastructure;
+using FlashSales.Infrastructure.Observability;
 using Modules.Users.Infrastructure;
+
+const string ServiceName = "Users";
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddObservabilityLogging(ServiceName);
+
 builder.Services
     .AddInfrastructureModule(builder.Configuration, UsersModule.Assemblies)
+    .AddObservabilityTracing(builder.Configuration, ServiceName)
     .AddUsersModule(builder.Configuration);
 
 var app = builder.Build();

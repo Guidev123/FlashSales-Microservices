@@ -4,6 +4,7 @@ using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Infrastructure.Observability;
 using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -42,7 +43,8 @@ namespace Modules.Catalog.Infrastructure
                 .AddEndpoints()
                 .AddPublicApi()
                 .AddServices()
-                .AddGrpcServices(configuration);
+                .AddGrpcServices(configuration)
+                .AddBlobStorageHealthCheck();
 
             return services;
         }
@@ -106,6 +108,7 @@ namespace Modules.Catalog.Infrastructure
                 ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
 
             services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
+            services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
 
             return services;
         }

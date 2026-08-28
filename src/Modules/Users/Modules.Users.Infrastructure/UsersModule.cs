@@ -4,6 +4,7 @@ using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Infrastructure.Observability;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,7 +46,8 @@ namespace Modules.Users.Infrastructure
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddPublicApi()
-                .AddGrpcServer();
+                .AddGrpcServer()
+                .AddBlobStorageHealthCheck();
 
             return services;
         }
@@ -135,6 +137,7 @@ namespace Modules.Users.Infrastructure
         private static IServiceCollection AddGrpcServer(this IServiceCollection services)
         {
             services.AddGrpc();
+            services.AddGrpcHealthChecks();
             return services;
         }
 
@@ -144,6 +147,8 @@ namespace Modules.Users.Infrastructure
             {
                 endpoints.MapGrpcService<GetUserPermissionsEndpoint>()
                     .RequireScope(UsersScopes.PermissionsRead);
+
+                endpoints.MapGrpcHealthChecksService().AllowAnonymous();
             });
 
             return app;

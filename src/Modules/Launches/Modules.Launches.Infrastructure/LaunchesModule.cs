@@ -4,6 +4,7 @@ using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Infrastructure.Observability;
 using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -107,6 +108,7 @@ namespace Modules.Launches.Infrastructure
                 ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
 
             services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
+            services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
 
             return services;
         }

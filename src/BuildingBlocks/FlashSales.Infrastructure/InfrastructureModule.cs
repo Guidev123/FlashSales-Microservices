@@ -14,15 +14,20 @@ using FlashSales.Infrastructure.Bus;
 using FlashSales.Infrastructure.Cache;
 using FlashSales.Infrastructure.Factories;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Infrastructure.Middlewares;
+using FlashSales.Infrastructure.Observability;
 using FlashSales.Infrastructure.Storage;
 using FluentValidation;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using MidR.DependencyInjection;
+using Serilog;
 using StackExchange.Redis;
 using System.Reflection;
 
@@ -39,7 +44,9 @@ namespace FlashSales.Infrastructure
                 .AddConnectionFactory(configuration)
                 .AddAuthenticationExtensions()
                 .AddAuthorizationExtensions()
-                .AddServiceBus(configuration);
+                .AddServiceBus(configuration)
+                .AddExceptionHandler()
+                .AddObservabilityHealthChecks(configuration);
 
             services.AddOpenApi();
 
@@ -167,19 +174,41 @@ namespace FlashSales.Infrastructure
             return services.AddAuthorizationInternal();
         }
 
+        private static IServiceCollection AddExceptionHandler(this IServiceCollection services)
+        {
+            services.AddExceptionHandler<GlobalExceptionMiddleware>();
+            services.AddProblemDetails();
+
+            return services;
+        }
+
         public static WebApplication UseInfrastructureModule(this WebApplication app)
         {
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
+            app.UseExceptionHandler();
 
-            app.UseHttpsRedirection();
+            app.MapEndpoints();
+
+            if (!app.Environment.IsEnvironment("Testing"))
+            {
+                app.MapOpenApi().AllowAnonymous();
+
+                app.MapHealthChecks("/health/live", new HealthCheckOptions
+                {
+                    Predicate = check => check.Tags.Contains(HealthChecksExtensions.LiveTag),
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                }).AllowAnonymous();
+
+                app.MapHealthChecks("/health/ready", new HealthCheckOptions
+                {
+                    Predicate = check => check.Tags.Contains(HealthChecksExtensions.ReadyTag),
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                }).AllowAnonymous();
+
+                app.UseSerilogRequestLogging();
+            }
 
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.MapEndpoints();
 
             return app;
         }
