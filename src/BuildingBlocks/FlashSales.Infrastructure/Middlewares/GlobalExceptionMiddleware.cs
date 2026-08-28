@@ -36,7 +36,6 @@ namespace FlashSales.Infrastructure.Middlewares
             return exception switch
             {
                 FlashSalesException flashSalesException when flashSalesException.Error?.Description is not null => flashSalesException.Error.Description,
-                _ when exception?.InnerException?.Message is not null => exception.InnerException.Message,
                 _ => "Unknown error"
             };
         }
