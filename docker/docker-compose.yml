@@ -93,6 +93,22 @@ services:
       - backend
     restart: unless-stopped
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:14269/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:latest
     container_name: azurite
@@ -164,6 +180,66 @@ services:
       timeout: 5s
       retries: 10
 
+  app-configuration:
+    image: mcr.microsoft.com/azure-app-configuration/app-configuration-emulator:1.2.0
+    container_name: app-configuration
+    environment:
+      "Tenant:AnonymousAuthEnabled": "true"
+      "Authentication:Anonymous:AnonymousUserRole": "Owner"
+    ports:
+      - "8483:8483"
+    networks:
+      - backend
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:4.2.0
+    container_name: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      start_period: 20s
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:8.0
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo_pass
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   keycloak_pgdata:
   app_pgdata:
@@ -171,6 +247,8 @@ volumes:
   seq_data:
   azurite_data:
   servicebus_mssql_data:
+  kafka_data:
+  mongodb_data:
 
 networks:
   backend:

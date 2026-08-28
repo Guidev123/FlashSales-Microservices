@@ -50,6 +50,9 @@ namespace FlashSales.Infrastructure
 
             services.AddOpenApi();
 
+            services.AddTransient<CallerLoggingMiddleware>();
+            services.AddTransient<AccountActivationMiddleware>();
+
             return services;
         }
 
@@ -209,6 +212,8 @@ namespace FlashSales.Infrastructure
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<CallerLoggingMiddleware>();
+            app.UseMiddleware<AccountActivationMiddleware>();
 
             return app;
         }
