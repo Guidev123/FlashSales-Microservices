@@ -1,7 +1,6 @@
 using Azure.Messaging.ServiceBus;
 using DotNet.Testcontainers.Builders;
 using FlashSales.Application.Authorization;
-using FlashSales.Infrastructure.Factories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -58,7 +57,6 @@ namespace Modules.Launches.IntegrationTests.Abstractions
             {
                 RemoveHostedServices(services);
                 ReplaceServiceBusClient(services);
-                ReplaceSqlConnectionFactory(services);
                 ReplacePermissionService(services);
             });
         }
@@ -119,15 +117,6 @@ namespace Modules.Launches.IntegrationTests.Abstractions
                 services.Remove(descriptor);
 
             services.AddSingleton(new ServiceBusClient(_serviceBusContainer.GetConnectionString()));
-        }
-
-        private void ReplaceSqlConnectionFactory(IServiceCollection services)
-        {
-            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(SqlConnectionFactory));
-            if (descriptor is not null)
-                services.Remove(descriptor);
-
-            services.AddSingleton(new SqlConnectionFactory(_postgresContainer.GetConnectionString()));
         }
 
         private void ReplacePermissionService(IServiceCollection services)

@@ -5,7 +5,7 @@ using Modules.Launches.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddInfrastructureModule(builder.Configuration, LaunchesModule.Assemblies)
+    .AddCoreInfrastructure(builder.Configuration, LaunchesModule.Assemblies)
     .AddLaunchesModule(builder.Configuration);
 
 var app = builder.Build();

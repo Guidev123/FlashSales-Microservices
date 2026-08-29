@@ -5,7 +5,7 @@ using Modules.Orders.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddInfrastructureModule(builder.Configuration, OrdersModule.Assemblies)
+    .AddCoreInfrastructure(builder.Configuration, OrdersModule.Assemblies)
     .AddOrdersModule(builder.Configuration);
 
 var app = builder.Build();

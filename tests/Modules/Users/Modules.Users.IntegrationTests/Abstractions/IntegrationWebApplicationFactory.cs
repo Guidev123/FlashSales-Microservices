@@ -1,6 +1,5 @@
 using Azure.Messaging.ServiceBus;
 using Azure.Storage.Blobs;
-using FlashSales.Infrastructure.Factories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -80,7 +79,6 @@ namespace Modules.Users.IntegrationTests.Abstractions
                 RemoveHostedServices(services);
                 ReplaceServiceBusClient(services);
                 ReplaceKeycloakOptions(services, keycloakAddress);
-                ReplaceSqlConnectionFactory(services);
                 ReplaceBlobServiceClient(services);
             });
         }
@@ -168,15 +166,6 @@ namespace Modules.Users.IntegrationTests.Abstractions
 
             services.RemoveAll<IOptions<KeyCloakOptions>>();
             services.AddSingleton<IOptions<KeyCloakOptions>>(new OptionsWrapper<KeyCloakOptions>(options));
-        }
-
-        private void ReplaceSqlConnectionFactory(IServiceCollection services)
-        {
-            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(SqlConnectionFactory));
-            if (descriptor is not null)
-                services.Remove(descriptor);
-
-            services.AddSingleton(new SqlConnectionFactory(_postgresContainer.GetConnectionString()));
         }
 
         private void ReplaceBlobServiceClient(IServiceCollection services)

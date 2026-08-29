@@ -1,6 +1,7 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
+using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
@@ -43,25 +44,35 @@ namespace Modules.Users.Infrastructure
                 .AddPermissionService()
                 .AddHttpClientServices(configuration)
                 .AddData(configuration)
+                .AddCache(configuration)
+                .AddCacheHealthCheck()
+                .AddBlobStorage(configuration)
+                .AddBlobStorageHealthCheck()
+                .AddServiceBus(configuration)
+                .AddServiceBusHealthCheck()
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddPublicApi()
-                .AddGrpcServer()
-                .AddBlobStorageHealthCheck();
+                .AddGrpcServer();
 
             return services;
         }
 
         private static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("Postgres")
+                ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
+
             services.AddDbContext<UsersDbContext>((sp, cfg) =>
             {
-                cfg.UseNpgsql(configuration.GetConnectionString("Postgres"), npgSqlCfg =>
+                cfg.UseNpgsql(connectionString, npgSqlCfg =>
                 {
                     npgSqlCfg.MigrationsHistoryTable("__EFMigrationsHistory", Schemas.Users);
                 });
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
+
+            services.AddPostgresHealthCheck(connectionString);
 
             services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IUserRepository, UserRepository>();

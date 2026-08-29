@@ -5,7 +5,7 @@ using Modules.Catalog.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddInfrastructureModule(builder.Configuration, CatalogModule.Assemblies)
+    .AddCoreInfrastructure(builder.Configuration, CatalogModule.Assemblies)
     .AddCatalogModule(builder.Configuration);
 
 var app = builder.Build();

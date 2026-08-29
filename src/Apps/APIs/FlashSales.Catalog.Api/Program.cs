@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddObservabilityLogging(ServiceName);
 
 builder.Services
-    .AddInfrastructureModule(builder.Configuration, CatalogModule.Assemblies)
+    .AddCoreInfrastructure(builder.Configuration, CatalogModule.Assemblies)
     .AddObservabilityTracing(builder.Configuration, ServiceName)
     .AddCatalogModule(builder.Configuration);
 

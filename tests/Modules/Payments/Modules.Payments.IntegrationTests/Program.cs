@@ -5,7 +5,7 @@ using Modules.Payments.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddInfrastructureModule(builder.Configuration, PaymentsModule.Assemblies)
+    .AddCoreInfrastructure(builder.Configuration, PaymentsModule.Assemblies)
     .AddPaymentsModule(builder.Configuration);
 
 var app = builder.Build();

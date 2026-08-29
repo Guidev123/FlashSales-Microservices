@@ -1,6 +1,7 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
+using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
@@ -38,27 +39,37 @@ namespace Modules.Catalog.Infrastructure
         {
             services
                 .AddData(configuration)
+                .AddCache(configuration)
+                .AddCacheHealthCheck()
+                .AddBlobStorage(configuration)
+                .AddBlobStorageHealthCheck()
+                .AddServiceBus(configuration)
+                .AddServiceBusHealthCheck()
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
                 .AddPublicApi()
                 .AddServices()
-                .AddGrpcServices(configuration)
-                .AddBlobStorageHealthCheck();
+                .AddGrpcServices(configuration);
 
             return services;
         }
 
         private static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("Postgres")
+                ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
+
             services.AddDbContext<CatalogDbContext>((sp, cfg) =>
             {
-                cfg.UseNpgsql(configuration.GetConnectionString("Postgres"), npgSqlCfg =>
+                cfg.UseNpgsql(connectionString, npgSqlCfg =>
                 {
                     npgSqlCfg.MigrationsHistoryTable("__EFMigrationsHistory", Schemas.Catalog);
                 });
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
+
+            services.AddPostgresHealthCheck(connectionString);
 
             services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<IProductRepository, ProductRepository>();

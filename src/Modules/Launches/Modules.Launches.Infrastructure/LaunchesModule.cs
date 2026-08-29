@@ -1,6 +1,7 @@
 using FlashSales.Application.Abstractions;
 using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
+using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
@@ -37,6 +38,10 @@ namespace Modules.Launches.Infrastructure
         {
             services
                 .AddData(configuration)
+                .AddCache(configuration)
+                .AddCacheHealthCheck()
+                .AddServiceBus(configuration)
+                .AddServiceBusHealthCheck()
                 .AddOutbox(configuration)
                 .AddInbox(configuration)
                 .AddEndpoints()
@@ -49,14 +54,19 @@ namespace Modules.Launches.Infrastructure
 
         private static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
+            var connectionString = configuration.GetConnectionString("Postgres")
+                ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
+
             services.AddDbContext<LaunchesDbContext>((sp, cfg) =>
             {
-                cfg.UseNpgsql(configuration.GetConnectionString("Postgres"), npgSqlCfg =>
+                cfg.UseNpgsql(connectionString, npgSqlCfg =>
                 {
                     npgSqlCfg.MigrationsHistoryTable("__EFMigrationsHistory", Schemas.Launches);
                 });
                 cfg.AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
             });
+
+            services.AddPostgresHealthCheck(connectionString);
 
             services.AddModuleUnitOfWork<UnitOfWork>();
             services.AddScoped<ILaunchRepository, LaunchRepository>();

@@ -12,7 +12,6 @@ using FlashSales.Infrastructure.Authentication;
 using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Bus;
 using FlashSales.Infrastructure.Cache;
-using FlashSales.Infrastructure.Factories;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Middlewares;
 using FlashSales.Infrastructure.Observability;
@@ -35,18 +34,14 @@ namespace FlashSales.Infrastructure
 {
     public static class InfrastructureModule
     {
-        public static IServiceCollection AddInfrastructureModule(this IServiceCollection services, IConfiguration configuration, IEnumerable<Assembly> assemblies)
+        public static IServiceCollection AddCoreInfrastructure(this IServiceCollection services, IConfiguration configuration, IEnumerable<Assembly> assemblies)
         {
             services
                 .AddApplication([.. assemblies])
-                .AddCache(configuration)
-                .AddBlobStorage(configuration)
-                .AddConnectionFactory(configuration)
                 .AddAuthenticationExtensions()
                 .AddAuthorizationExtensions()
-                .AddServiceBus(configuration)
                 .AddExceptionHandler()
-                .AddObservabilityHealthChecks(configuration);
+                .AddCoreHealthChecks(configuration);
 
             services.AddOpenApi();
 
@@ -119,7 +114,7 @@ namespace FlashSales.Infrastructure
             return services;
         }
 
-        private static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddCache(this IServiceCollection services, IConfiguration configuration)
         {
             try
             {
@@ -142,7 +137,7 @@ namespace FlashSales.Infrastructure
             return services;
         }
 
-        private static IServiceCollection AddBlobStorage(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddBlobStorage(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<BlobStorageOptions>(configuration.GetSection(BlobStorageOptions.SectionName));
 
@@ -153,16 +148,6 @@ namespace FlashSales.Infrastructure
 
                 return new BlobServiceClient(blobOptions.Value.ConnectionString);
             });
-
-            return services;
-        }
-
-        private static IServiceCollection AddConnectionFactory(this IServiceCollection services, IConfiguration configuration)
-        {
-            var connectionString = configuration.GetConnectionString("Postgres")
-                ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
-
-            services.AddSingleton(new SqlConnectionFactory(connectionString));
 
             return services;
         }
