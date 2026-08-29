@@ -7,6 +7,8 @@ using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Observability;
 using FlashSales.Users.Contracts.Protos;
+using JasperFx.Events.Projections;
+using Marten;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,16 +16,20 @@ using Modules.Launches.Contracts;
 using Modules.Orders.Application.Orders.Sagas;
 using Modules.Orders.Application.Orders.Services;
 using Modules.Orders.Domain.Launches.Repositories;
+using Modules.Orders.Domain.Orders.DomainEvents;
+using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Repositories;
 using Modules.Orders.Endpoints;
 using Modules.Orders.Infrastructure.Authorization;
 using Modules.Orders.Infrastructure.Database;
+using Modules.Orders.Infrastructure.Database.EventSourcing;
 using Modules.Orders.Infrastructure.Database.Repositories;
 using Modules.Orders.Infrastructure.Jobs;
 using Modules.Orders.Infrastructure.Options;
 using Modules.Orders.Infrastructure.Services;
 using Modules.Payments.Contracts;
 using System.Reflection;
+using Weasel.Core;
 
 namespace Modules.Orders.Infrastructure
 {
@@ -50,6 +56,7 @@ namespace Modules.Orders.Infrastructure
                 .AddApiServices(configuration)
                 .AddSagasOrchestrators()
                 .AddServices()
+                .AddEventSourcing(configuration)
                 .AddGrpcServices(configuration);
 
             return services;
@@ -146,6 +153,43 @@ namespace Modules.Orders.Infrastructure
             services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
 
             return services;
+        }
+
+        private static IServiceCollection AddEventSourcing(this IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.GetConnectionString("Postgres")
+                ?? throw new InvalidOperationException("Connection string 'Postgres' is not configured.");
+
+            services.AddScoped<OutboxDomainEventListener>();
+
+            services.AddMarten(cfg =>
+            {
+                cfg.DatabaseSchemaName = Schemas.OrdersEventSourcing;
+                cfg.Connection(connectionString);
+                cfg.ApplyDomainConfiguration();
+            })
+            .BuildSessionsWith<OrdersSessionFactory>(ServiceLifetime.Scoped);
+
+            return services;
+        }
+
+        private static void ApplyDomainConfiguration(this StoreOptions options)
+        {
+            options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString);
+
+            options.Events.AddEventType<OrderCreatedDomainEvent>();
+            options.Events.AddEventType<OrderConfirmedDomainEvent>();
+            options.Events.AddEventType<OrderPaymentProcessingStartedDomainEvent>();
+            options.Events.AddEventType<OrderRefundedDomainEvent>();
+            options.Events.AddEventType<OrderCancelledDomainEvent>();
+
+            options.Projections.Snapshot<Order>(SnapshotLifecycle.Inline);
+
+            options.Schema.For<Order>().Index(x => new { x.CustomerId, x.LaunchId }, x =>
+            {
+                x.IsUnique = true;
+                x.Predicate = "(data ->> 'Status') IN ('AwaitingPayment', 'PaymentProcessing')";
+            });
         }
     }
 }

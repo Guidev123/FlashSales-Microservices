@@ -1,4 +1,5 @@
 using FlashSales.Domain.DomainObjects;
+using Modules.Orders.Domain.Orders.Enums;
 
 namespace Modules.Orders.Domain.Orders.DomainEvents
 {
@@ -16,6 +17,8 @@ namespace Modules.Orders.Domain.Orders.DomainEvents
             CustomerId = customerId;
             LaunchId = launchId;
             Quantity = quantity;
+            ConfirmedAt = DateTimeOffset.UtcNow;
+            Status = OrderStatus.Confirmed;
         }
 
         private OrderConfirmedDomainEvent()
@@ -25,5 +28,7 @@ namespace Modules.Orders.Domain.Orders.DomainEvents
         public Guid CustomerId { get; set; }
         public Guid LaunchId { get; set; }
         public int Quantity { get; set; }
+        public DateTimeOffset ConfirmedAt { get; set; }
+        public OrderStatus Status { get; set; }
     }
 }

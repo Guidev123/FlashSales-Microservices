@@ -10,28 +10,6 @@ namespace Modules.Orders.Domain.Orders.Entities
     {
         public const int PaymentWindowMinutes = 10;
 
-        private Order(
-            Guid customerId,
-            Guid launchId,
-            Guid sellerId,
-            Guid productId,
-            int quantity,
-            decimal unitPrice
-            )
-        {
-            CustomerId = customerId;
-            LaunchId = launchId;
-            SellerId = sellerId;
-            ProductId = productId;
-            Quantity = quantity;
-            UnitPrice = unitPrice;
-            TotalAmount = quantity * unitPrice;
-            OrderCode = $"ORD-{Id.ToString("N")[..8].ToUpperInvariant()}";
-            Status = OrderStatus.AwaitingPayment;
-            ExpiresAt = CreatedOn.AddMinutes(PaymentWindowMinutes);
-            Validate();
-        }
-
         private Order()
         { }
 
@@ -57,9 +35,24 @@ namespace Modules.Orders.Domain.Orders.Entities
             decimal unitPrice
             )
         {
-            var order = new Order(customerId, launchId, sellerId, productId, quantity, unitPrice);
+            var order = new Order();
 
-            order.AddDomainEvent(OrderCreatedDomainEvent.Create(order.Id, customerId, launchId, quantity));
+            var expiresAt = order.CreatedOn.AddMinutes(PaymentWindowMinutes);
+
+            var orderCreatedDomainEvent = OrderCreatedDomainEvent.Create(
+                order.Id,
+                customerId,
+                sellerId,
+                launchId,
+                productId,
+                unitPrice,
+                quantity,
+                expiresAt);
+
+            order.Apply(orderCreatedDomainEvent);
+            order.Validate();
+
+            order.AddDomainEvent(orderCreatedDomainEvent);
 
             return order;
         }
@@ -71,7 +64,10 @@ namespace Modules.Orders.Domain.Orders.Entities
             if (Status != OrderStatus.AwaitingPayment)
                 return Result.Failure(OrderErrors.InvalidStatusTransition(Status.ToString(), OrderStatus.PaymentProcessing.ToString()));
 
-            Status = OrderStatus.PaymentProcessing;
+            var paymentInProcessingDomainEvent = OrderPaymentProcessingStartedDomainEvent.Create(Id);
+
+            Apply(paymentInProcessingDomainEvent);
+            AddDomainEvent(paymentInProcessingDomainEvent);
 
             return Result.Success();
         }
@@ -83,10 +79,10 @@ namespace Modules.Orders.Domain.Orders.Entities
             if (Status == OrderStatus.Cancelled || Status == OrderStatus.Refunded)
                 return Result.Failure(OrderErrors.InvalidStatusTransition(Status.ToString(), OrderStatus.Confirmed.ToString()));
 
-            Status = OrderStatus.Confirmed;
-            ConfirmedAt = DateTimeOffset.UtcNow;
+            var orderConfirmedDomainEvent = OrderConfirmedDomainEvent.Create(Id, CustomerId, LaunchId, Quantity);
 
-            AddDomainEvent(OrderConfirmedDomainEvent.Create(Id, CustomerId, LaunchId, Quantity));
+            Apply(orderConfirmedDomainEvent);
+            AddDomainEvent(orderConfirmedDomainEvent);
 
             return Result.Success();
         }
@@ -98,10 +94,10 @@ namespace Modules.Orders.Domain.Orders.Entities
             if (Status == OrderStatus.Confirmed || Status == OrderStatus.Refunded)
                 return Result.Failure(OrderErrors.InvalidStatusTransition(Status.ToString(), OrderStatus.Cancelled.ToString()));
 
-            Status = OrderStatus.Cancelled;
-            Reason = reason;
+            var orderCancelledDomainEvent = OrderCancelledDomainEvent.Create(Id, CustomerId, LaunchId, Quantity, reason);
 
-            AddDomainEvent(OrderCancelledDomainEvent.Create(Id, CustomerId, LaunchId, Quantity, reason));
+            Apply(orderCancelledDomainEvent);
+            AddDomainEvent(orderCancelledDomainEvent);
 
             return Result.Success();
         }
@@ -112,12 +108,50 @@ namespace Modules.Orders.Domain.Orders.Entities
         {
             if (Status == OrderStatus.Refunded) return Result.Success();
 
-            Status = OrderStatus.Refunded;
-            Reason = reason;
+            var orderRefundedDomainEvent = OrderRefundedDomainEvent.Create(Id, CustomerId, LaunchId, Quantity, reason);
 
-            AddDomainEvent(OrderRefundedDomainEvent.Create(Id, CustomerId, LaunchId, Quantity, reason));
+            Apply(orderRefundedDomainEvent);
+            AddDomainEvent(orderRefundedDomainEvent);
 
             return Result.Success();
+        }
+
+        public void Apply(OrderCreatedDomainEvent domainEvent)
+        {
+            Id = domainEvent.OrderId;
+            CustomerId = domainEvent.CustomerId;
+            SellerId = domainEvent.SellerId;
+            LaunchId = domainEvent.LaunchId;
+            Quantity = domainEvent.Quantity;
+            ProductId = domainEvent.ProductId;
+            UnitPrice = domainEvent.UnitPrice;
+            TotalAmount = domainEvent.Quantity * domainEvent.UnitPrice;
+            OrderCode = $"ORD-{Id.ToString("N")[..8].ToUpperInvariant()}";
+            Status = domainEvent.Status;
+            ExpiresAt = domainEvent.ExpiresAt;
+        }
+
+        public void Apply(OrderPaymentProcessingStartedDomainEvent domainEvent)
+        {
+            Status = domainEvent.Status;
+        }
+
+        public void Apply(OrderConfirmedDomainEvent domainEvent)
+        {
+            Status = domainEvent.Status;
+            ConfirmedAt = domainEvent.ConfirmedAt;
+        }
+
+        public void Apply(OrderCancelledDomainEvent domainEvent)
+        {
+            Status = domainEvent.Status;
+            Reason = domainEvent.Reason;
+        }
+
+        public void Apply(OrderRefundedDomainEvent domainEvent)
+        {
+            Status = domainEvent.Status;
+            Reason = domainEvent.Reason;
         }
 
         protected override void Validate()

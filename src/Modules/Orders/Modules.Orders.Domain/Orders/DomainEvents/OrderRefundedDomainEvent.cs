@@ -1,4 +1,5 @@
 using FlashSales.Domain.DomainObjects;
+using Modules.Orders.Domain.Orders.Enums;
 
 namespace Modules.Orders.Domain.Orders.DomainEvents
 {
@@ -17,6 +18,7 @@ namespace Modules.Orders.Domain.Orders.DomainEvents
             LaunchId = launchId;
             Quantity = quantity;
             Reason = reason;
+            Status = OrderStatus.Refunded;
         }
 
         private OrderRefundedDomainEvent()
@@ -27,5 +29,6 @@ namespace Modules.Orders.Domain.Orders.DomainEvents
         public Guid LaunchId { get; set; }
         public int Quantity { get; set; }
         public string Reason { get; set; } = null!;
+        public OrderStatus Status { get; set; }
     }
 }
