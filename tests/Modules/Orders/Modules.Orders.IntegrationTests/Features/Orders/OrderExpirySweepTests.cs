@@ -8,6 +8,7 @@ using Modules.Orders.Domain.Orders.Repositories;
 using Modules.Orders.IntegrationTests.Abstractions;
 using Modules.Orders.IntegrationTests.Abstractions.Helpers;
 using Npgsql;
+using System.Text.Json;
 
 namespace Modules.Orders.IntegrationTests.Features.Orders
 {
@@ -87,18 +88,25 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
         }
 
+        // Order now lives as a Marten Inline document (orders_events.mt_doc_order), not the old EF table —
+        // rewrite the "ExpiresAt" key directly inside the stored JSONB. The replacement value is produced
+        // by the exact same serializer Marten uses (UseSystemTextJsonForSerialization), so it round-trips
+        // correctly instead of risking a Postgres-vs-.NET date-format mismatch.
         private async Task ForceExpiredAsync(Guid orderId)
         {
+            var expiredAtJson = JsonSerializer.Serialize(DateTimeOffset.UtcNow.AddHours(-1));
+
             await using var connection = new NpgsqlConnection(_factory.GetConnectionString());
             await connection.OpenAsync();
 
             await using var cmd = new NpgsqlCommand(
-                """UPDATE orders."Orders" SET "ExpiresAt" = now() - interval '1 hour' WHERE "Id" = @OrderId""",
+                """UPDATE orders_events.mt_doc_order SET data = jsonb_set(data, '{ExpiresAt}', @ExpiresAt::jsonb) WHERE id = @OrderId""",
                 connection);
+            cmd.Parameters.AddWithValue("ExpiresAt", expiredAtJson);
             cmd.Parameters.AddWithValue("OrderId", orderId);
             await cmd.ExecuteNonQueryAsync();
         }

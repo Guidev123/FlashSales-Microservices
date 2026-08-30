@@ -5,6 +5,7 @@ using MidR.Interfaces;
 using Modules.Orders.Application.Orders.Features.Create;
 using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Models;
+using Modules.Orders.Domain.Orders.Repositories;
 using Modules.Orders.Infrastructure.Database;
 
 namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
@@ -55,12 +56,14 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
 
             await using var scope = factory.Services.CreateAsyncScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
+            var orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
 
             var order = Order.Create(customerId, launch.LaunchId, launch.SellerId, launch.ProductId, quantity, launch.DiscountedPrice);
             var saga = OrderCreationSaga.Create(order.Id);
             saga.MarkStockReserved();
 
-            dbContext.Orders.Add(order);
+            await orderRepository.StartStreamAsync(order);
+
             dbContext.OrderCreationSagas.Add(saga);
             await dbContext.SaveChangesAsync();
 

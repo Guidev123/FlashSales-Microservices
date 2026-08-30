@@ -1,4 +1,6 @@
-﻿namespace FlashSales.Domain.DomainObjects
+﻿using System.Text.Json.Serialization;
+
+namespace FlashSales.Domain.DomainObjects
 {
     public abstract class Entity
     {
@@ -11,8 +13,11 @@
         }
 
         public Guid Id { get; protected set; }
-        public DateTimeOffset CreatedOn { get; }
-        public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+        public DateTimeOffset CreatedOn { get; protected set; }
+
+        [JsonIgnore]
+        public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents?.AsReadOnly() ?? [];
 
         public void AddDomainEvent(DomainEvent domainEvent)
         {

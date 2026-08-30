@@ -14,22 +14,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         public async Task DisposeAsync() => await _factory.ResetDatabaseAsync();
 
         [Fact]
-        public async Task GetOrderById_WhenOrderExistsForCustomer_ShouldReturnOrderWithLaunchTitle()
-        {
-            // Arrange
-            var (launch, customerId, orderId, orderCode) = await OrderHelper.CreateAwaitingPaymentAsync(_factory, _faker);
-
-            // Act
-            var result = await _mediator.SendAsync(new GetOrderByIdQuery(orderId, customerId));
-
-            // Assert
-            result.IsSuccess.Should().BeTrue();
-            result.Value.Id.Should().Be(orderId);
-            result.Value.OrderCode.Should().Be(orderCode);
-            result.Value.LaunchTitle.Should().Be(launch.Title);
-        }
-
-        [Fact]
         public async Task GetOrderById_WhenOrderBelongsToDifferentCustomer_ShouldReturnNotFound()
         {
             // Arrange

@@ -28,7 +28,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
             order.Reason.Should().Be("Customer requested cancellation");
         }
@@ -63,7 +63,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             firstResult.IsSuccess.Should().BeTrue();
             secondResult.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
         }
 

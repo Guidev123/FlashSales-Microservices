@@ -22,7 +22,7 @@ namespace Modules.Orders.Application.Orders.Features.Confirm
                 return result;
             }
 
-            orderRepository.Update(order);
+            await orderRepository.AppendAsync(order, cancellationToken);
 
             return Result.Success();
         }

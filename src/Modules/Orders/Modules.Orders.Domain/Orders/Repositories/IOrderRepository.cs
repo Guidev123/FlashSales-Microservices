@@ -6,9 +6,9 @@ namespace Modules.Orders.Domain.Orders.Repositories
     {
         Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-        void Add(Order order);
+        Task StartStreamAsync(Order order, CancellationToken cancellationToken = default);
 
-        void Update(Order order);
+        Task AppendAsync(Order order, CancellationToken cancellationToken = default);
 
         Task<IReadOnlyCollection<Guid>> GetStaleAwaitingOrProcessingAsync(CancellationToken cancellationToken = default);
     }

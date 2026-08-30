@@ -30,7 +30,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
 
             var saga = await _dbContext.OrderCreationSagas.FirstAsync(s => s.Id == orderId);
@@ -49,7 +49,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.PaymentProcessing);
         }
 

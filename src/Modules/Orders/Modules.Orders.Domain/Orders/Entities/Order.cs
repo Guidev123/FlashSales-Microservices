@@ -14,16 +14,27 @@ namespace Modules.Orders.Domain.Orders.Entities
         { }
 
         public Guid CustomerId { get; private set; }
+
         public Guid LaunchId { get; private set; }
+
         public Guid SellerId { get; private set; }
+
         public Guid ProductId { get; private set; }
+
         public int Quantity { get; private set; }
+
         public decimal UnitPrice { get; private set; }
+
         public decimal TotalAmount { get; private set; }
+
         public string OrderCode { get; private set; } = null!;
+
         public OrderStatus Status { get; private set; }
+
         public DateTimeOffset ExpiresAt { get; private set; }
+
         public DateTimeOffset? ConfirmedAt { get; private set; }
+
         public string? Reason { get; private set; }
 
         public static Order Create(
@@ -119,6 +130,7 @@ namespace Modules.Orders.Domain.Orders.Entities
         public void Apply(OrderCreatedDomainEvent domainEvent)
         {
             Id = domainEvent.OrderId;
+            CreatedOn = domainEvent.OccurredOn;
             CustomerId = domainEvent.CustomerId;
             SellerId = domainEvent.SellerId;
             LaunchId = domainEvent.LaunchId;

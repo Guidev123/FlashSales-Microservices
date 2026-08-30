@@ -2,37 +2,26 @@ using Dapper;
 using FlashSales.Application.Abstractions;
 using Modules.Orders.Application.Orders.Dtos;
 using Modules.Orders.Application.Orders.Services;
+using Modules.Orders.Infrastructure.Database.EventSourcing;
+using MongoDB.Driver;
 
 namespace Modules.Orders.Infrastructure.Database.Repositories
 {
-    internal sealed class OrderQueryService(IUnitOfWork unitOfWork) : IOrderQueryService
+    internal sealed class OrderQueryService(IUnitOfWork unitOfWork, IMongoDatabase mongoDatabase) : IOrderQueryService
     {
+        private readonly IMongoCollection<OrderReadModel> _collection = mongoDatabase.GetCollection<OrderReadModel>("orders");
+
         public async Task<OrderResponse?> GetByIdAsync(Guid orderId, Guid customerId, CancellationToken cancellationToken = default)
         {
-            const string sql = """
-                SELECT
-                    o."Id",
-                    o."LaunchId",
-                    ls."Title" AS "LaunchTitle",
-                    o."ProductId",
-                    o."SellerId",
-                    o."Quantity",
-                    o."UnitPrice",
-                    o."TotalAmount",
-                    o."OrderCode",
-                    o."Status",
-                    o."ExpiresAt",
-                    o."ConfirmedAt",
-                    o."Reason",
-                    o."CreatedOn"
-                FROM orders."Orders" o
-                LEFT JOIN orders."Launches" ls ON ls."Id" = o."LaunchId"
-                WHERE o."Id" = @OrderId AND o."CustomerId" = @CustomerId
-                """;
+            var order = await _collection
+                .Find(o => o.Id == orderId && o.CustomerId == customerId)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            var row = await unitOfWork.Connection.QuerySingleOrDefaultAsync(sql, new { OrderId = orderId, CustomerId = customerId });
+            if (order is null) return null;
 
-            return row is null ? null : MapToResponse(row);
+            var launchTitle = await GetLaunchTitleAsync(order.LaunchId);
+
+            return MapToResponse(order, launchTitle);
         }
 
         public async Task<IReadOnlyCollection<OrderResponse>> GetByCustomerAsync(
@@ -41,95 +30,84 @@ namespace Modules.Orders.Infrastructure.Database.Repositories
             int size,
             CancellationToken cancellationToken = default)
         {
-            const string sql = """
-                SELECT
-                    o."Id",
-                    o."LaunchId",
-                    ls."Title" AS "LaunchTitle",
-                    o."ProductId",
-                    o."SellerId",
-                    o."Quantity",
-                    o."UnitPrice",
-                    o."TotalAmount",
-                    o."OrderCode",
-                    o."Status",
-                    o."ExpiresAt",
-                    o."ConfirmedAt",
-                    o."Reason",
-                    o."CreatedOn"
-                FROM orders."Orders" o
-                LEFT JOIN orders."Launches" ls ON ls."Id" = o."LaunchId"
-                WHERE o."CustomerId" = @CustomerId
-                ORDER BY o."CreatedOn" DESC
-                OFFSET @Offset ROWS FETCH NEXT @Size ROWS ONLY
-                """;
+            var orders = await _collection
+                .Find(o => o.CustomerId == customerId)
+                .SortByDescending(o => o.CreatedOn)
+                .Skip((page - 1) * size)
+                .Limit(size)
+                .ToListAsync(cancellationToken);
 
-            var rows = await unitOfWork.Connection.QueryAsync(sql, new
-            {
-                CustomerId = customerId,
-                Offset = (page - 1) * size,
-                Size = size
-            }).WaitAsync(cancellationToken);
+            if (orders.Count == 0) return [];
 
-            return rows.Select(MapToResponse).ToList().AsReadOnly();
+            var launchTitles = await GetLaunchTitlesAsync(orders.Select(o => o.LaunchId).Distinct());
+
+            return orders
+                .Select(o => MapToResponse(o, launchTitles.GetValueOrDefault(o.LaunchId)))
+                .ToList()
+                .AsReadOnly();
         }
 
         public Task<int> GetByCustomerTotalCountAsync(Guid customerId, CancellationToken cancellationToken = default)
         {
-            const string sql = """
-                SELECT COUNT(*)
-                FROM orders."Orders" o
-                WHERE o."CustomerId" = @CustomerId
-                """;
-
-            return unitOfWork.Connection.ExecuteScalarAsync<int>(sql, new { CustomerId = customerId });
+            return _collection
+                .CountDocumentsAsync(o => o.CustomerId == customerId, cancellationToken: cancellationToken)
+                .ContinueWith(t => (int)t.Result, cancellationToken);
         }
 
-        public Task<bool> HasActiveOrderAsync(Guid customerId, Guid launchId, CancellationToken cancellationToken = default)
+        public async Task<bool> HasActiveOrderAsync(Guid customerId, Guid launchId, CancellationToken cancellationToken = default)
         {
-            const string sql = """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM orders."Orders" o
-                    WHERE o."CustomerId" = @CustomerId
-                      AND o."LaunchId" = @LaunchId
-                      AND o."Status" IN ('AwaitingPayment', 'PaymentProcessing')
-                )
-                """;
+            var count = await _collection.CountDocumentsAsync(
+                o => o.CustomerId == customerId
+                     && o.LaunchId == launchId
+                     && (o.Status == "AwaitingPayment" || o.Status == "PaymentProcessing"),
+                cancellationToken: cancellationToken);
 
-            return unitOfWork.Connection.ExecuteScalarAsync<bool>(sql, new { CustomerId = customerId, LaunchId = launchId });
+            return count > 0;
         }
 
-        public Task<int> GetConfirmedQuantityAsync(Guid customerId, Guid launchId, CancellationToken cancellationToken = default)
+        public async Task<int> GetConfirmedQuantityAsync(Guid customerId, Guid launchId, CancellationToken cancellationToken = default)
         {
-            const string sql = """
-                SELECT COALESCE(SUM(o."Quantity"), 0)
-                FROM orders."Orders" o
-                WHERE o."CustomerId" = @CustomerId
-                  AND o."LaunchId" = @LaunchId
-                  AND o."Status" = 'Confirmed'
-                """;
+            var confirmedOrders = await _collection
+                .Find(o => o.CustomerId == customerId && o.LaunchId == launchId && o.Status == "Confirmed")
+                .Project(o => o.Quantity)
+                .ToListAsync(cancellationToken);
 
-            return unitOfWork.Connection.ExecuteScalarAsync<int>(sql, new { CustomerId = customerId, LaunchId = launchId });
+            return confirmedOrders.Sum();
         }
 
-        private static OrderResponse MapToResponse(dynamic row)
+        private async Task<string?> GetLaunchTitleAsync(Guid launchId)
+        {
+            const string sql = """SELECT "Title" FROM orders."Launches" WHERE "Id" = @LaunchId""";
+
+            return await unitOfWork.Connection.QuerySingleOrDefaultAsync<string?>(sql, new { LaunchId = launchId });
+        }
+
+        private async Task<Dictionary<Guid, string?>> GetLaunchTitlesAsync(IEnumerable<Guid> launchIds)
+        {
+            const string sql = """SELECT "Id", "Title" FROM orders."Launches" WHERE "Id" = ANY(@LaunchIds)""";
+
+            var rows = await unitOfWork.Connection.QueryAsync(sql, new { LaunchIds = launchIds.ToArray() });
+
+            return rows.ToDictionary(r => (Guid)r.Id, r => (string?)r.Title);
+        }
+
+        private static OrderResponse MapToResponse(OrderReadModel order, string? launchTitle)
         {
             return new OrderResponse(
-                Id: row.Id,
-                LaunchId: row.LaunchId,
-                LaunchTitle: row.LaunchTitle,
-                ProductId: row.ProductId,
-                SellerId: row.SellerId,
-                Quantity: row.Quantity,
-                UnitPrice: row.UnitPrice,
-                TotalAmount: row.TotalAmount,
-                OrderCode: row.OrderCode,
-                Status: (string)row.Status,
-                ExpiresAt: row.ExpiresAt,
-                ConfirmedAt: row.ConfirmedAt,
-                Reason: row.Reason,
-                CreatedOn: row.CreatedOn
+                Id: order.Id,
+                LaunchId: order.LaunchId,
+                LaunchTitle: launchTitle,
+                ProductId: order.ProductId,
+                SellerId: order.SellerId,
+                Quantity: order.Quantity,
+                UnitPrice: order.UnitPrice,
+                TotalAmount: order.TotalAmount,
+                OrderCode: order.OrderCode,
+                Status: order.Status,
+                ExpiresAt: order.ExpiresAt,
+                ConfirmedAt: order.ConfirmedAt,
+                Reason: order.Reason,
+                CreatedOn: order.CreatedOn
                 );
         }
     }

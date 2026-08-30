@@ -5,8 +5,10 @@ using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
+using FlashSales.Infrastructure.Mongo;
 using FlashSales.Infrastructure.Observability;
 using FlashSales.Users.Contracts.Protos;
+using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,7 @@ using Modules.Orders.Infrastructure.Jobs;
 using Modules.Orders.Infrastructure.Options;
 using Modules.Orders.Infrastructure.Services;
 using Modules.Payments.Contracts;
+using MongoDB.Driver;
 using System.Reflection;
 using Weasel.Core;
 
@@ -162,20 +165,44 @@ namespace Modules.Orders.Infrastructure
 
             services.AddScoped<OutboxDomainEventListener>();
 
+            services
+                .AddMongo(configuration)
+                .AddMongoHealthCheck();
+
+            var mongoConnectionString = configuration.GetConnectionString("Mongo")
+                ?? throw new InvalidOperationException("Connection string 'Mongo' is not configured.");
+            var mongoOptions = configuration.GetSection(MongoOptions.SectionName).Get<MongoOptions>()
+                ?? throw new InvalidOperationException($"Configuration section '{MongoOptions.SectionName}' is missing.");
+            var mongoDatabase = new MongoClient(mongoConnectionString).GetDatabase(mongoOptions.DatabaseName);
+
             services.AddMarten(cfg =>
             {
                 cfg.DatabaseSchemaName = Schemas.OrdersEventSourcing;
                 cfg.Connection(connectionString);
                 cfg.ApplyDomainConfiguration();
+
+                cfg.Events.Subscribe(new MongoOrderProjectionSubscription(mongoDatabase), o =>
+                {
+                    o.Name = "MongoOrderProjection";
+                    o.FilterIncomingEventsOnStreamType(typeof(Order));
+                    o.IncludeType<OrderCreatedDomainEvent>();
+                    o.IncludeType<OrderPaymentProcessingStartedDomainEvent>();
+                    o.IncludeType<OrderConfirmedDomainEvent>();
+                    o.IncludeType<OrderCancelledDomainEvent>();
+                    o.IncludeType<OrderRefundedDomainEvent>();
+                });
             })
-            .BuildSessionsWith<OrdersSessionFactory>(ServiceLifetime.Scoped);
+            .AddAsyncDaemon(DaemonMode.HotCold)
+            .ApplyAllDatabaseChangesOnStartup();
 
             return services;
         }
 
         private static void ApplyDomainConfiguration(this StoreOptions options)
         {
-            options.UseSystemTextJsonForSerialization(enumStorage: EnumStorage.AsString);
+            options.UseSystemTextJsonForSerialization(
+                enumStorage: EnumStorage.AsString,
+                configure: settings => settings.Converters.Add(new OrderJsonConverter()));
 
             options.Events.AddEventType<OrderCreatedDomainEvent>();
             options.Events.AddEventType<OrderConfirmedDomainEvent>();
@@ -190,6 +217,8 @@ namespace Modules.Orders.Infrastructure
                 x.IsUnique = true;
                 x.Predicate = "(data ->> 'Status') IN ('AwaitingPayment', 'PaymentProcessing')";
             });
+
+            options.Schema.For<Order>().Index(x => new { x.Status, x.ExpiresAt });
         }
     }
 }

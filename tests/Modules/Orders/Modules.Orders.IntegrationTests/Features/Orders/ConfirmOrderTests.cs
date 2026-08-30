@@ -28,7 +28,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsSuccess.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == orderId);
+            var order = (await GetOrderAsync(orderId))!;
             order.Status.Should().Be(OrderStatus.Confirmed);
             order.ConfirmedAt.Should().NotBeNull();
         }

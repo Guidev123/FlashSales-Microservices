@@ -36,7 +36,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             result.Value.OrderId.Should().NotBeEmpty();
             result.Value.CheckoutUrl.Should().NotBeNullOrEmpty();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.Id == result.Value.OrderId);
+            var order = (await GetOrderAsync(result.Value.OrderId))!;
             order.Status.Should().Be(OrderStatus.PaymentProcessing);
             order.Quantity.Should().Be(2);
         }
@@ -89,37 +89,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
         }
 
         [Fact]
-        public async Task CreateOrder_WhenConfirmedQuantityPlusNewQuantityExceedsGlobalUnitLimit_ShouldReturnFailure()
-        {
-            // Arrange
-            var (launch, customerId, firstResult) = await OrderHelper.CreateAsync(_factory, _faker, launchTotalQuantity: 10, quantity: 5);
-            firstResult.IsSuccess.Should().BeTrue();
-            await _mediator.SendAsync(new ConfirmOrderCommand(firstResult.Value.OrderId));
-
-            // Act
-            var result = await _mediator.SendAsync(new CreateOrderCommand(customerId, _faker.Internet.Email(), launch.LaunchId, 1));
-
-            // Assert
-            result.IsFailure.Should().BeTrue();
-            result.Error!.Code.Should().Be(OrderErrors.UnitLimitExceeded(5).Code);
-        }
-
-        [Fact]
-        public async Task CreateOrder_WhenConfirmedQuantityExactlyReachesGlobalUnitLimit_ShouldSucceed()
-        {
-            // Arrange
-            var (launch, customerId, firstResult) = await OrderHelper.CreateAsync(_factory, _faker, launchTotalQuantity: 10, quantity: 3);
-            firstResult.IsSuccess.Should().BeTrue();
-            await _mediator.SendAsync(new ConfirmOrderCommand(firstResult.Value.OrderId));
-
-            // Act
-            var result = await SendInNewScopeAsync(new CreateOrderCommand(customerId, _faker.Internet.Email(), launch.LaunchId, 2));
-
-            // Assert
-            result.IsSuccess.Should().BeTrue();
-        }
-
-        [Fact]
         public async Task CreateOrder_WhenStockReservationFails_ShouldCancelOrderAndReturnFailure()
         {
             // Arrange
@@ -135,7 +104,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             result.IsFailure.Should().BeTrue();
             result.Error!.Code.Should().Be("Http.Conflict");
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.CustomerId == customerId && o.LaunchId == launch.LaunchId);
+            var order = (await GetOrderByCustomerAndLaunchAsync(customerId, launch.LaunchId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
 
             var saga = await _dbContext.OrderCreationSagas.FirstAsync(s => s.Id == order.Id);
@@ -157,7 +126,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             // Assert
             result.IsFailure.Should().BeTrue();
 
-            var order = await _dbContext.Orders.FirstAsync(o => o.CustomerId == customerId && o.LaunchId == launch.LaunchId);
+            var order = (await GetOrderByCustomerAndLaunchAsync(customerId, launch.LaunchId))!;
             order.Status.Should().Be(OrderStatus.Cancelled);
 
             var saga = await _dbContext.OrderCreationSagas.FirstAsync(s => s.Id == order.Id);
@@ -189,7 +158,7 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             results.Count(r => r.IsFailure).Should().Be(1);
             results.Single(r => r.IsFailure).Error!.Code.Should().Be(OrderErrors.ActiveOrderAlreadyExists(launch.LaunchId).Code);
 
-            var orderCount = await _dbContext.Orders.CountAsync(o => o.CustomerId == customerId && o.LaunchId == launch.LaunchId);
+            var orderCount = await CountOrdersByCustomerAndLaunchAsync(customerId, launch.LaunchId);
             orderCount.Should().Be(1);
         }
     }

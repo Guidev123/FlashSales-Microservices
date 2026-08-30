@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Required so Marten's compile-time source generator (JasperFx.Events.SourceGenerator)
+         can dispatch Order's conventional Apply/Create methods for the self-aggregating
+         event-sourced pattern - it must run in the assembly that defines the aggregate type. -->
+    <PackageReference Include="Marten" Version="9.30.0" />
     <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Domain\FlashSales.Domain.csproj" />
   </ItemGroup>
 

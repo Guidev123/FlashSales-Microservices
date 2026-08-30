@@ -27,15 +27,21 @@ namespace Modules.Orders.Application.Orders.Sagas
         {
             var saga = OrderCreationSaga.Create(order.Id);
 
-            orderRepository.Add(order);
+            try
+            {
+                await orderRepository.StartStreamAsync(order, cancellationToken);
+            }
+            catch (ActiveOrderAlreadyExistsException ex)
+            {
+                return Result.Failure<string>(OrderErrors.ActiveOrderAlreadyExists(ex.LaunchId));
+            }
+
             sagaRepository.Add(saga);
 
             var createResult = await unitOfWork.SaveChangesAsync(cancellationToken);
             if (createResult.IsFailure)
             {
-                return Result.Failure<string>(createResult.ErrorType == PersistenceErrors.UniqueViolation
-                    ? OrderErrors.ActiveOrderAlreadyExists(order.LaunchId)
-                    : OrderErrors.ReservationFailed);
+                return Result.Failure<string>(OrderErrors.ReservationFailed);
             }
 
             var reserveResult = await launchesPublicApi.ReserveAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
@@ -44,7 +50,7 @@ namespace Modules.Orders.Application.Orders.Sagas
                 saga.Fail($"Failed to reserve stock: {reserveResult.Error!.Description}");
                 order.Cancel(saga.LastError!);
                 sagaRepository.Update(saga);
-                orderRepository.Update(order);
+                await orderRepository.AppendAsync(order, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 return Result.Failure<string>(reserveResult.Error!);
@@ -78,7 +84,7 @@ namespace Modules.Orders.Application.Orders.Sagas
             saga.MarkCompleted();
             order.MarkPaymentProcessing();
             sagaRepository.Update(saga);
-            orderRepository.Update(order);
+            await orderRepository.AppendAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             return checkoutResult.Value.CheckoutUrl;
@@ -123,7 +129,7 @@ namespace Modules.Orders.Application.Orders.Sagas
             order.Cancel(reason);
 
             sagaRepository.Update(saga);
-            orderRepository.Update(order);
+            await orderRepository.AppendAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }

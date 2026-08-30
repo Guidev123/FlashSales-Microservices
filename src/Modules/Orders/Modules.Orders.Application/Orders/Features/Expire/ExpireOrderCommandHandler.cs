@@ -24,7 +24,7 @@ namespace Modules.Orders.Application.Orders.Features.Expire
                 return Result.Success();
             }
 
-            orderRepository.Update(order);
+            await orderRepository.AppendAsync(order, cancellationToken);
 
             await launchesPublicApi.ReleaseAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
 

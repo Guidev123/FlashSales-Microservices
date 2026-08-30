@@ -4,6 +4,7 @@ using Grpc.Health.V1;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using MongoDB.Driver;
 using StackExchange.Redis;
 
 namespace FlashSales.Infrastructure.Observability
@@ -62,6 +63,15 @@ namespace FlashSales.Infrastructure.Observability
                     sp => sp.GetRequiredService<BlobServiceClient>(),
                     name: "blob-storage",
                     tags: [ReadyTag]);
+
+            return services;
+        }
+
+        public static IServiceCollection AddMongoHealthCheck(this IServiceCollection services)
+        {
+            services
+                .AddHealthChecks()
+                .AddMongoDb(sp => sp.GetRequiredService<IMongoClient>(), name: "mongodb", tags: [ReadyTag]);
 
             return services;
         }
