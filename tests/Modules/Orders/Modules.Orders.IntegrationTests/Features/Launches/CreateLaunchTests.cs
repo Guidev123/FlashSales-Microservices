@@ -25,7 +25,8 @@ namespace Modules.Orders.IntegrationTests.Features.Launches
                 OriginalPrice: 100m,
                 TotalQuantity: 10,
                 StartAt: DateTimeOffset.UtcNow.AddMinutes(5),
-                EndAt: DateTimeOffset.UtcNow.AddHours(2));
+                EndAt: DateTimeOffset.UtcNow.AddHours(2),
+                SaleType: LaunchSaleType.Quantity.ToString());
 
             // Act
             var result = await _mediator.SendAsync(command);
@@ -53,7 +54,8 @@ namespace Modules.Orders.IntegrationTests.Features.Launches
                 OriginalPrice: 100m,
                 TotalQuantity: 10,
                 StartAt: DateTimeOffset.UtcNow.AddMinutes(5),
-                EndAt: DateTimeOffset.UtcNow.AddHours(2));
+                EndAt: DateTimeOffset.UtcNow.AddHours(2),
+                SaleType: LaunchSaleType.Quantity.ToString());
 
             var firstResult = await _mediator.SendAsync(command);
 

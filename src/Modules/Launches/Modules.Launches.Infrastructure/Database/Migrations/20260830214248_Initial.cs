@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Modules.Orders.Infrastructure.Database.Migrations
+namespace Modules.Launches.Infrastructure.Database.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -12,11 +12,11 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "orders");
+                name: "launches");
 
             migrationBuilder.CreateTable(
                 name: "InboxMessages",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -37,19 +37,23 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Launches",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     SellerId = table.Column<Guid>(type: "uuid", nullable: false),
                     ProductId = table.Column<Guid>(type: "uuid", nullable: false),
                     Title = table.Column<string>(type: "VARCHAR(200)", nullable: false),
-                    DiscountedPrice = table.Column<decimal>(type: "numeric", nullable: false),
-                    OriginalPrice = table.Column<decimal>(type: "numeric", nullable: false),
-                    TotalQuantity = table.Column<int>(type: "integer", nullable: false),
-                    StartAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    EndAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    Description = table.Column<string>(type: "VARCHAR(2000)", nullable: false),
+                    DiscountedPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
+                    OriginalPrice = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
+                    TotalQuantity = table.Column<int>(type: "integer", nullable: true),
+                    ReservedQuantity = table.Column<int>(type: "integer", nullable: true, defaultValue: 0),
+                    StartAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    EndAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    SaleType = table.Column<string>(type: "VARCHAR(50)", nullable: false),
                     Status = table.Column<string>(type: "VARCHAR(50)", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -58,24 +62,8 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OrderCreationSagas",
-                schema: "orders",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Step = table.Column<string>(type: "VARCHAR(50)", nullable: false),
-                    RetryCount = table.Column<int>(type: "integer", nullable: false),
-                    LastError = table.Column<string>(type: "VARCHAR(500)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OrderCreationSagas", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "OutboxMessages",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -96,7 +84,7 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "RolePermissions",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     RoleName = table.Column<string>(type: "VARCHAR(50)", nullable: false),
@@ -108,8 +96,25 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Sellers",
+                schema: "launches",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "VARCHAR(200)", nullable: false),
+                    ProfilePictureUrl = table.Column<string>(type: "VARCHAR(500)", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Sellers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserRoles",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     IdentityProviderId = table.Column<string>(type: "VARCHAR(100)", nullable: false),
@@ -123,7 +128,7 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateTable(
                 name: "InboxMessageConsumers",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -136,15 +141,38 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_InboxMessageConsumers_InboxMessages_InboxMessageId",
                         column: x => x.InboxMessageId,
-                        principalSchema: "orders",
+                        principalSchema: "launches",
                         principalTable: "InboxMessages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
+                name: "StockReservations",
+                schema: "launches",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LaunchId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StockReservations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_StockReservations_Launches_LaunchId",
+                        column: x => x.LaunchId,
+                        principalSchema: "launches",
+                        principalTable: "Launches",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "OutboxMessageConsumers",
-                schema: "orders",
+                schema: "launches",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -157,7 +185,7 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
                     table.ForeignKey(
                         name: "FK_OutboxMessageConsumers_OutboxMessages_OutboxMessageId",
                         column: x => x.OutboxMessageId,
-                        principalSchema: "orders",
+                        principalSchema: "launches",
                         principalTable: "OutboxMessages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -165,36 +193,50 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_InboxMessageConsumers_InboxMessageId_Name",
-                schema: "orders",
+                schema: "launches",
                 table: "InboxMessageConsumers",
                 columns: new[] { "InboxMessageId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_InboxMessages_CorrelationId",
-                schema: "orders",
+                schema: "launches",
                 table: "InboxMessages",
                 column: "CorrelationId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderCreationSagas_Step_CreatedOn",
-                schema: "orders",
-                table: "OrderCreationSagas",
-                columns: new[] { "Step", "CreatedOn" });
+                name: "IX_Launches_SellerId_Status",
+                schema: "launches",
+                table: "Launches",
+                columns: new[] { "SellerId", "Status" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessageConsumers_OutboxMessageId_Name",
-                schema: "orders",
+                schema: "launches",
                 table: "OutboxMessageConsumers",
                 columns: new[] { "OutboxMessageId", "Name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessages_CorrelationId",
-                schema: "orders",
+                schema: "launches",
                 table: "OutboxMessages",
                 column: "CorrelationId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sellers_UserId",
+                schema: "launches",
+                table: "Sellers",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StockReservations_LaunchId_OrderId",
+                schema: "launches",
+                table: "StockReservations",
+                columns: new[] { "LaunchId", "OrderId" },
                 unique: true);
         }
 
@@ -203,35 +245,39 @@ namespace Modules.Orders.Infrastructure.Database.Migrations
         {
             migrationBuilder.DropTable(
                 name: "InboxMessageConsumers",
-                schema: "orders");
-
-            migrationBuilder.DropTable(
-                name: "Launches",
-                schema: "orders");
-
-            migrationBuilder.DropTable(
-                name: "OrderCreationSagas",
-                schema: "orders");
+                schema: "launches");
 
             migrationBuilder.DropTable(
                 name: "OutboxMessageConsumers",
-                schema: "orders");
+                schema: "launches");
 
             migrationBuilder.DropTable(
                 name: "RolePermissions",
-                schema: "orders");
+                schema: "launches");
+
+            migrationBuilder.DropTable(
+                name: "Sellers",
+                schema: "launches");
+
+            migrationBuilder.DropTable(
+                name: "StockReservations",
+                schema: "launches");
 
             migrationBuilder.DropTable(
                 name: "UserRoles",
-                schema: "orders");
+                schema: "launches");
 
             migrationBuilder.DropTable(
                 name: "InboxMessages",
-                schema: "orders");
+                schema: "launches");
 
             migrationBuilder.DropTable(
                 name: "OutboxMessages",
-                schema: "orders");
+                schema: "launches");
+
+            migrationBuilder.DropTable(
+                name: "Launches",
+                schema: "launches");
         }
     }
 }

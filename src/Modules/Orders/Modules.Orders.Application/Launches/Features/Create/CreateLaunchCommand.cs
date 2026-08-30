@@ -11,6 +11,7 @@ namespace Modules.Orders.Application.Launches.Features.Create
         decimal OriginalPrice,
         int TotalQuantity,
         DateTimeOffset StartAt,
-        DateTimeOffset EndAt
+        DateTimeOffset EndAt,
+        string SaleType
         ) : ICommand;
 }

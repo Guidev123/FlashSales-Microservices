@@ -4,15 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Modules.Launches.Infrastructure.Database;
+using Modules.Orders.Infrastructure.Database;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Modules.Launches.Infrastructure.Database.Migrations
+namespace Modules.Orders.Infrastructure.Database.Migrations
 {
-    [DbContext(typeof(LaunchesDbContext))]
-    [Migration("20260830180952_Initial")]
+    [DbContext(typeof(OrdersDbContext))]
+    [Migration("20260830214326_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("launches")
+                .HasDefaultSchema("orders")
                 .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -66,7 +66,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.HasIndex("CorrelationId")
                         .IsUnique();
 
-                    b.ToTable("InboxMessages", "launches");
+                    b.ToTable("InboxMessages", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Application.Inbox.InboxMessageConsumer", b =>
@@ -87,7 +87,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.HasIndex("InboxMessageId", "Name")
                         .IsUnique();
 
-                    b.ToTable("InboxMessageConsumers", "launches");
+                    b.ToTable("InboxMessageConsumers", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Application.Outbox.OutboxMessage", b =>
@@ -130,7 +130,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.HasIndex("CorrelationId")
                         .IsUnique();
 
-                    b.ToTable("OutboxMessages", "launches");
+                    b.ToTable("OutboxMessages", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Application.Outbox.OutboxMessageConsumer", b =>
@@ -151,7 +151,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.HasIndex("OutboxMessageId", "Name")
                         .IsUnique();
 
-                    b.ToTable("OutboxMessageConsumers", "launches");
+                    b.ToTable("OutboxMessageConsumers", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Infrastructure.Authorization.RolePermission", b =>
@@ -164,7 +164,7 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
 
                     b.HasKey("RoleName", "PermissionCode");
 
-                    b.ToTable("RolePermissions", "launches");
+                    b.ToTable("RolePermissions", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Infrastructure.Authorization.UserRole", b =>
@@ -180,10 +180,10 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
 
                     b.HasKey("IdentityProviderId", "RoleName");
 
-                    b.ToTable("UserRoles", "launches");
+                    b.ToTable("UserRoles", "orders");
                 });
 
-            modelBuilder.Entity("Modules.Launches.Domain.Launches.Entities.Launch", b =>
+            modelBuilder.Entity("Modules.Orders.Domain.Launches.Entities.Launch", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -192,56 +192,45 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal>("DiscountedPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("OriginalPrice")
+                        .HasColumnType("numeric");
+
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SaleType")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(50)");
+
                     b.Property<Guid>("SellerId")
                         .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("VARCHAR(50)");
 
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(200)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("SellerId", "Status");
-
-                    b.ToTable("Launches", "launches");
-                });
-
-            modelBuilder.Entity("Modules.Launches.Domain.Launches.Entities.StockReservation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedOn")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("LaunchId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Quantity")
+                    b.Property<int>("TotalQuantity")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LaunchId", "OrderId")
-                        .IsUnique();
-
-                    b.ToTable("StockReservations", "launches");
+                    b.ToTable("Launches", "orders");
                 });
 
-            modelBuilder.Entity("Modules.Launches.Domain.Sellers.Entities.Seller", b =>
+            modelBuilder.Entity("Modules.Orders.Domain.Orders.Models.OrderCreationSaga", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -250,26 +239,21 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("VARCHAR(200)");
-
-                    b.Property<string>("ProfilePictureUrl")
+                    b.Property<string>("LastError")
                         .HasColumnType("VARCHAR(500)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Step")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(50)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Sellers_UserId");
+                    b.HasIndex("Step", "CreatedOn");
 
-                    b.ToTable("Sellers", "launches");
+                    b.ToTable("OrderCreationSagas", "orders");
                 });
 
             modelBuilder.Entity("FlashSales.Application.Inbox.InboxMessageConsumer", b =>
@@ -288,119 +272,6 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                         .HasForeignKey("OutboxMessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Modules.Launches.Domain.Launches.Entities.Launch", b =>
-                {
-                    b.OwnsOne("Modules.Launches.Domain.Launches.ValueObjects.LaunchMetadata", "Metadata", b1 =>
-                        {
-                            b1.Property<Guid>("LaunchId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Description")
-                                .IsRequired()
-                                .HasColumnType("VARCHAR(2000)")
-                                .HasColumnName("Description");
-
-                            b1.Property<string>("Title")
-                                .IsRequired()
-                                .HasColumnType("VARCHAR(200)")
-                                .HasColumnName("Title");
-
-                            b1.HasKey("LaunchId");
-
-                            b1.ToTable("Launches", "launches");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LaunchId");
-                        });
-
-                    b.OwnsOne("Modules.Launches.Domain.Launches.ValueObjects.LaunchPrice", "Price", b1 =>
-                        {
-                            b1.Property<Guid>("LaunchId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<decimal>("DiscountedPrice")
-                                .HasColumnType("numeric(18,2)")
-                                .HasColumnName("DiscountedPrice");
-
-                            b1.Property<decimal>("OriginalPrice")
-                                .HasColumnType("numeric(18,2)")
-                                .HasColumnName("OriginalPrice");
-
-                            b1.HasKey("LaunchId");
-
-                            b1.ToTable("Launches", "launches");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LaunchId");
-                        });
-
-                    b.OwnsOne("Modules.Launches.Domain.Launches.ValueObjects.LaunchSchedule", "Schedule", b1 =>
-                        {
-                            b1.Property<Guid>("LaunchId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<DateTimeOffset>("EndAt")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("EndAt");
-
-                            b1.Property<DateTimeOffset>("StartAt")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("StartAt");
-
-                            b1.HasKey("LaunchId");
-
-                            b1.ToTable("Launches", "launches");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LaunchId");
-                        });
-
-                    b.OwnsOne("Modules.Launches.Domain.Launches.ValueObjects.LaunchStock", "Stock", b1 =>
-                        {
-                            b1.Property<Guid>("LaunchId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<int>("ReservedQuantity")
-                                .HasColumnType("integer")
-                                .HasDefaultValue(0)
-                                .HasColumnName("ReservedQuantity");
-
-                            b1.Property<int>("TotalQuantity")
-                                .HasColumnType("integer")
-                                .HasColumnName("TotalQuantity");
-
-                            b1.HasKey("LaunchId");
-
-                            b1.ToTable("Launches", "launches");
-
-                            b1.WithOwner()
-                                .HasForeignKey("LaunchId");
-                        });
-
-                    b.Navigation("Metadata")
-                        .IsRequired();
-
-                    b.Navigation("Price");
-
-                    b.Navigation("Schedule");
-
-                    b.Navigation("Stock");
-                });
-
-            modelBuilder.Entity("Modules.Launches.Domain.Launches.Entities.StockReservation", b =>
-                {
-                    b.HasOne("Modules.Launches.Domain.Launches.Entities.Launch", null)
-                        .WithMany("StockReservations")
-                        .HasForeignKey("LaunchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Modules.Launches.Domain.Launches.Entities.Launch", b =>
-                {
-                    b.Navigation("StockReservations");
                 });
 #pragma warning restore 612, 618
         }

@@ -192,6 +192,10 @@ namespace Modules.Launches.Infrastructure.Database.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SaleType")
+                        .IsRequired()
+                        .HasColumnType("VARCHAR(50)");
+
                     b.Property<Guid>("SellerId")
                         .HasColumnType("uuid");
 

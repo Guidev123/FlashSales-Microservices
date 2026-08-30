@@ -29,7 +29,8 @@ namespace Modules.Launches.Endpoints.Launches
                     request.TotalQuantity,
                     request.ReservedQuantity,
                     request.StartAt,
-                    request.EndAt
+                    request.EndAt,
+                    request.SaleType
                     ), cancellationToken);
 
                 return result.Match(Results.NoContent, ApiResults.Problem);
@@ -45,7 +46,8 @@ namespace Modules.Launches.Endpoints.Launches
             int TotalQuantity,
             int ReservedQuantity,
             DateTimeOffset StartAt,
-            DateTimeOffset EndAt
+            DateTimeOffset EndAt,
+            string SaleType
             );
     }
 }

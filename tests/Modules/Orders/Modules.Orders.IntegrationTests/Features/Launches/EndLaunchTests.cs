@@ -20,7 +20,8 @@ namespace Modules.Orders.IntegrationTests.Features.Launches
             var launchId = Guid.NewGuid();
             await _mediator.SendAsync(new CreateLaunchCommand(
                 launchId, Guid.NewGuid(), Guid.NewGuid(), _faker.Commerce.ProductName(),
-                50m, 100m, 10, DateTimeOffset.UtcNow.AddMinutes(5), DateTimeOffset.UtcNow.AddHours(2)));
+                50m, 100m, 10, DateTimeOffset.UtcNow.AddMinutes(5), DateTimeOffset.UtcNow.AddHours(2),
+                LaunchSaleType.Quantity.ToString()));
 
             // Act
             var result = await _mediator.SendAsync(new EndLaunchCommand(launchId));

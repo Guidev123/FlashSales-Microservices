@@ -15,7 +15,8 @@ namespace Modules.Orders.Domain.Launches.Entities
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt
+            DateTimeOffset endAt,
+            LaunchSaleType saleType
             )
         {
             Id = launchId;
@@ -27,6 +28,7 @@ namespace Modules.Orders.Domain.Launches.Entities
             TotalQuantity = totalQuantity;
             StartAt = startAt;
             EndAt = endAt;
+            SaleType = saleType;
             Status = LaunchStatus.Active;
             Validate();
         }
@@ -42,6 +44,7 @@ namespace Modules.Orders.Domain.Launches.Entities
         public int TotalQuantity { get; private set; }
         public DateTimeOffset StartAt { get; private set; }
         public DateTimeOffset EndAt { get; private set; }
+        public LaunchSaleType SaleType { get; private set; }
         public LaunchStatus Status { get; private set; }
 
         public static Launch Create(
@@ -53,10 +56,11 @@ namespace Modules.Orders.Domain.Launches.Entities
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt
+            DateTimeOffset endAt,
+            LaunchSaleType saleType
             )
         {
-            return new Launch(launchId, sellerId, productId, title, discountedPrice, originalPrice, totalQuantity, startAt, endAt);
+            return new Launch(launchId, sellerId, productId, title, discountedPrice, originalPrice, totalQuantity, startAt, endAt, saleType);
         }
 
         public void MarkEnded()

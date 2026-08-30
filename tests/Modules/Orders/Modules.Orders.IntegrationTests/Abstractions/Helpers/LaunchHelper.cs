@@ -1,6 +1,7 @@
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using MidR.Interfaces;
+using Modules.Orders.Domain.Launches.Enums;
 using ReplicaCreateLaunchCommand = Modules.Orders.Application.Launches.Features.Create.CreateLaunchCommand;
 
 namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
@@ -25,7 +26,8 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
         internal static async Task<RealLaunch> CreateActiveAsync(
             IntegrationWebApplicationFactory factory,
             Faker faker,
-            int totalQuantity = 10)
+            int totalQuantity = 10,
+            LaunchSaleType saleType = LaunchSaleType.Quantity)
         {
             var seller = SellerHelper.Create(faker);
             var productId = Guid.NewGuid();
@@ -44,7 +46,8 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
                 OriginalPrice,
                 totalQuantity,
                 startAt,
-                endAt);
+                endAt,
+                saleType);
 
             return new RealLaunch(
                 seller.UserId,
@@ -69,7 +72,8 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt)
+            DateTimeOffset endAt,
+            LaunchSaleType saleType = LaunchSaleType.Quantity)
         {
             await using var scope = factory.Services.CreateAsyncScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
@@ -83,7 +87,8 @@ namespace Modules.Orders.IntegrationTests.Abstractions.Helpers
                 originalPrice,
                 totalQuantity,
                 startAt,
-                endAt));
+                endAt,
+                saleType.ToString()));
         }
     }
 }

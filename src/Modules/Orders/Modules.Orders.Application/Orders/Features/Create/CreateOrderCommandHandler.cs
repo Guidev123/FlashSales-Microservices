@@ -37,10 +37,12 @@ namespace Modules.Orders.Application.Orders.Features.Create
                 return Result.Failure<CreateOrderResponse>(OrderErrors.ActiveOrderAlreadyExists(request.LaunchId));
             }
 
+            var unitLimit = launch.SaleType == LaunchSaleType.SingleUnit ? 1 : GlobalUnitLimit;
+
             var confirmedQuantity = await orderQueryService.GetConfirmedQuantityAsync(request.CustomerId, request.LaunchId, cancellationToken);
-            if (confirmedQuantity + request.Quantity > GlobalUnitLimit)
+            if (confirmedQuantity + request.Quantity > unitLimit)
             {
-                return Result.Failure<CreateOrderResponse>(OrderErrors.UnitLimitExceeded(GlobalUnitLimit));
+                return Result.Failure<CreateOrderResponse>(OrderErrors.UnitLimitExceeded(unitLimit));
             }
 
             var order = Order.Create(

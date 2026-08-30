@@ -10,6 +10,7 @@ namespace Modules.Launches.Application.Launches.Features.Schedule
         int TotalQuantity,
         int ReservedQuantity,
         DateTimeOffset StartAt,
-        DateTimeOffset EndAt
+        DateTimeOffset EndAt,
+        string SaleType
         ) : ICommand;
 }

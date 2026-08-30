@@ -17,7 +17,8 @@ namespace Modules.Orders.Infrastructure.IntegrationEvents
                 notification.OriginalPrice,
                 notification.TotalQuantity,
                 notification.StartAt,
-                notification.EndAt
+                notification.EndAt,
+                notification.SaleType
                 ), cancellationToken);
         }
     }

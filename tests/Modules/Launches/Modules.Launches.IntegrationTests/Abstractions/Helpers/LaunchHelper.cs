@@ -4,6 +4,7 @@ using MidR.Interfaces;
 using Modules.Launches.Application.Launches.Features.Activate;
 using Modules.Launches.Application.Launches.Features.Create;
 using Modules.Launches.Application.Launches.Features.Schedule;
+using Modules.Launches.Domain.Launches.Enums;
 
 namespace Modules.Launches.IntegrationTests.Abstractions.Helpers
 {
@@ -30,7 +31,8 @@ namespace Modules.Launches.IntegrationTests.Abstractions.Helpers
         internal static async Task<(Guid UserId, Guid LaunchId)> CreateAndScheduleAsync(
             IntegrationWebApplicationFactory factory,
             Faker faker,
-            int totalQuantity = 10)
+            int totalQuantity = 10,
+            LaunchSaleType saleType = LaunchSaleType.Quantity)
         {
             var (userId, launchId) = await CreateAsync(factory, faker);
 
@@ -45,7 +47,8 @@ namespace Modules.Launches.IntegrationTests.Abstractions.Helpers
                 TotalQuantity: totalQuantity,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddMinutes(5),
-                EndAt: DateTimeOffset.UtcNow.AddHours(2)));
+                EndAt: DateTimeOffset.UtcNow.AddHours(2),
+                SaleType: saleType.ToString()));
 
             return (userId, launchId);
         }
@@ -53,9 +56,10 @@ namespace Modules.Launches.IntegrationTests.Abstractions.Helpers
         internal static async Task<(Guid UserId, Guid LaunchId)> CreateAndActivateAsync(
             IntegrationWebApplicationFactory factory,
             Faker faker,
-            int totalQuantity = 10)
+            int totalQuantity = 10,
+            LaunchSaleType saleType = LaunchSaleType.Quantity)
         {
-            var (userId, launchId) = await CreateAndScheduleAsync(factory, faker, totalQuantity);
+            var (userId, launchId) = await CreateAndScheduleAsync(factory, faker, totalQuantity, saleType);
 
             await using var scope = factory.Services.CreateAsyncScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();

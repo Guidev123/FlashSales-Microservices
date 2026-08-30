@@ -25,6 +25,11 @@ namespace Modules.Orders.Infrastructure.Database.Configurations
             builder.Property(l => l.StartAt).IsRequired();
             builder.Property(l => l.EndAt).IsRequired();
 
+            builder.Property(l => l.SaleType)
+                .HasColumnType("VARCHAR(50)")
+                .HasConversion<string>()
+                .IsRequired();
+
             builder.Property(l => l.Status)
                 .HasColumnType("VARCHAR(50)")
                 .HasConversion<string>()

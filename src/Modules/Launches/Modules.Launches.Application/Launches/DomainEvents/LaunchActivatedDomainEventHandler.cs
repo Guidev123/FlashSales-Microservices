@@ -21,7 +21,8 @@ namespace Modules.Launches.Application.Launches.DomainEvents
                 notification.OriginalPrice,
                 notification.TotalQuantity,
                 notification.StartAt,
-                notification.EndAt);
+                notification.EndAt,
+                notification.SaleType);
 
             await eventBus.PublishAsync(
                 Topics.LaunchActivated,

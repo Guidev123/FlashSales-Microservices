@@ -1,6 +1,7 @@
 using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
 using Modules.Orders.Domain.Launches.Entities;
+using Modules.Orders.Domain.Launches.Enums;
 using Modules.Orders.Domain.Launches.Repositories;
 
 namespace Modules.Orders.Application.Launches.Features.Create
@@ -17,6 +18,8 @@ namespace Modules.Orders.Application.Launches.Features.Create
                 return Result.Success();
             }
 
+            var saleType = Enum.Parse<LaunchSaleType>(request.SaleType, ignoreCase: true);
+
             var launch = Launch.Create(
                 request.LaunchId,
                 request.SellerId,
@@ -26,7 +29,8 @@ namespace Modules.Orders.Application.Launches.Features.Create
                 request.OriginalPrice,
                 request.TotalQuantity,
                 request.StartAt,
-                request.EndAt
+                request.EndAt,
+                saleType
                 );
 
             launchRepository.Add(launch);

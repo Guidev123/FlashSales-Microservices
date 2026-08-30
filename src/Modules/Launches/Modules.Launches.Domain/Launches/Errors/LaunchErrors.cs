@@ -59,5 +59,9 @@ namespace Modules.Launches.Domain.Launches.Errors
         public static readonly Error QuantityMustBeAtLeastOne = Error.Invalid(
             "Launches.QuantityMustBeAtLeastOne",
             "Quantity must be at least 1");
+
+        public static readonly Error SaleTypeRequired = Error.Invalid(
+            "Launches.SaleTypeRequired",
+            "Sale type must be either SingleUnit or Quantity");
     }
 }

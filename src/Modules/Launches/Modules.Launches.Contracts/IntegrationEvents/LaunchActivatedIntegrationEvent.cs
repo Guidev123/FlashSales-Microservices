@@ -14,8 +14,9 @@ namespace Modules.Launches.Contracts.IntegrationEvents
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt)
-            => new(correlationId, launchId, sellerId, productId, title, discountedPrice, originalPrice, totalQuantity, startAt, endAt);
+            DateTimeOffset endAt,
+            string saleType)
+            => new(correlationId, launchId, sellerId, productId, title, discountedPrice, originalPrice, totalQuantity, startAt, endAt, saleType);
 
         private LaunchActivatedIntegrationEvent(
             Guid correlationId,
@@ -27,7 +28,8 @@ namespace Modules.Launches.Contracts.IntegrationEvents
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt)
+            DateTimeOffset endAt,
+            string saleType)
             : base(correlationId, nameof(LaunchActivatedIntegrationEvent))
         {
             LaunchId = launchId;
@@ -39,6 +41,7 @@ namespace Modules.Launches.Contracts.IntegrationEvents
             TotalQuantity = totalQuantity;
             StartAt = startAt;
             EndAt = endAt;
+            SaleType = saleType;
         }
 
         private LaunchActivatedIntegrationEvent() { }
@@ -52,5 +55,6 @@ namespace Modules.Launches.Contracts.IntegrationEvents
         public int TotalQuantity { get; set; }
         public DateTimeOffset StartAt { get; set; }
         public DateTimeOffset EndAt { get; set; }
+        public string SaleType { get; set; } = null!;
     }
 }

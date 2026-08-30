@@ -28,7 +28,8 @@ namespace Modules.Launches.IntegrationTests.Features.Launches
                 TotalQuantity: 50,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddHours(1),
-                EndAt: DateTimeOffset.UtcNow.AddHours(3));
+                EndAt: DateTimeOffset.UtcNow.AddHours(3),
+                SaleType: LaunchSaleType.Quantity.ToString());
 
             // Act
             var result = await _mediator.SendAsync(command);
@@ -57,7 +58,8 @@ namespace Modules.Launches.IntegrationTests.Features.Launches
                 TotalQuantity: 50,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddMinutes(-1),
-                EndAt: DateTimeOffset.UtcNow.AddHours(1));
+                EndAt: DateTimeOffset.UtcNow.AddHours(1),
+                SaleType: LaunchSaleType.Quantity.ToString());
 
             // Act
             var result = await _mediator.SendAsync(command);
@@ -80,7 +82,8 @@ namespace Modules.Launches.IntegrationTests.Features.Launches
                 TotalQuantity: 50,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddHours(1),
-                EndAt: DateTimeOffset.UtcNow.AddHours(3));
+                EndAt: DateTimeOffset.UtcNow.AddHours(3),
+                SaleType: LaunchSaleType.Quantity.ToString());
 
             // Act
             var result = await _mediator.SendAsync(command);
@@ -105,7 +108,8 @@ namespace Modules.Launches.IntegrationTests.Features.Launches
                 TotalQuantity: 10,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddHours(1),
-                EndAt: DateTimeOffset.UtcNow.AddHours(3)));
+                EndAt: DateTimeOffset.UtcNow.AddHours(3),
+                SaleType: LaunchSaleType.Quantity.ToString()));
 
             // Assert
             result.IsFailure.Should().BeTrue();
@@ -128,7 +132,8 @@ namespace Modules.Launches.IntegrationTests.Features.Launches
                 TotalQuantity: 10,
                 ReservedQuantity: 0,
                 StartAt: DateTimeOffset.UtcNow.AddHours(1),
-                EndAt: DateTimeOffset.UtcNow.AddHours(3)));
+                EndAt: DateTimeOffset.UtcNow.AddHours(3),
+                SaleType: LaunchSaleType.Quantity.ToString()));
 
             // Assert
             result.IsFailure.Should().BeTrue();

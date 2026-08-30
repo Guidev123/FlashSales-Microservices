@@ -25,6 +25,11 @@ namespace Modules.Launches.Infrastructure.Database.Configurations
                 .HasConversion<string>()
                 .IsRequired();
 
+            builder.Property(l => l.SaleType)
+                .HasColumnType("VARCHAR(50)")
+                .HasConversion<string>()
+                .IsRequired();
+
             builder.Property(l => l.CreatedOn)
                 .IsRequired();
 

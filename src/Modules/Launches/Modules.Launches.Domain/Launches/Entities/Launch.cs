@@ -29,6 +29,7 @@ namespace Modules.Launches.Domain.Launches.Entities
         public LaunchPrice? Price { get; private set; }
         public LaunchStock? Stock { get; private set; }
         public LaunchSchedule? Schedule { get; private set; }
+        public LaunchSaleType SaleType { get; private set; }
         public LaunchStatus Status { get; private set; }
         public IReadOnlyCollection<StockReservation> StockReservations => _stockReservations.AsReadOnly();
 
@@ -41,7 +42,7 @@ namespace Modules.Launches.Domain.Launches.Entities
             return launch;
         }
 
-        public Result SetSchedule(LaunchPrice price, LaunchStock stock, LaunchSchedule schedule)
+        public Result SetSchedule(LaunchPrice price, LaunchStock stock, LaunchSchedule schedule, LaunchSaleType saleType)
         {
             if (Status != LaunchStatus.Draft)
                 return Result.Failure(LaunchErrors.InvalidStatusTransition(Status.ToString(), LaunchStatus.Scheduled.ToString()));
@@ -49,9 +50,13 @@ namespace Modules.Launches.Domain.Launches.Entities
             if (schedule.StartAt <= DateTimeOffset.UtcNow)
                 return Result.Failure(LaunchErrors.InvalidSchedule);
 
+            if (saleType == LaunchSaleType.None)
+                return Result.Failure(LaunchErrors.SaleTypeRequired);
+
             Price = price;
             Stock = stock;
             Schedule = schedule;
+            SaleType = saleType;
             Status = LaunchStatus.Scheduled;
 
             AddDomainEvent(LaunchScheduledDomainEvent.Create(
@@ -60,7 +65,8 @@ namespace Modules.Launches.Domain.Launches.Entities
                 price.OriginalPrice,
                 stock.TotalQuantity,
                 schedule.StartAt,
-                schedule.EndAt));
+                schedule.EndAt,
+                saleType.ToString()));
 
             return Result.Success();
         }
@@ -81,7 +87,8 @@ namespace Modules.Launches.Domain.Launches.Entities
                 Price.OriginalPrice,
                 Stock!.TotalQuantity,
                 Schedule!.StartAt,
-                Schedule.EndAt));
+                Schedule.EndAt,
+                SaleType.ToString()));
 
             return Result.Success();
         }

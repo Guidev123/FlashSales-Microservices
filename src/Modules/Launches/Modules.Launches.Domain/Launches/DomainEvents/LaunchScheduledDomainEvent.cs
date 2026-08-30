@@ -10,8 +10,9 @@ namespace Modules.Launches.Domain.Launches.DomainEvents
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt)
-            => new(launchId, discountedPrice, originalPrice, totalQuantity, startAt, endAt);
+            DateTimeOffset endAt,
+            string saleType)
+            => new(launchId, discountedPrice, originalPrice, totalQuantity, startAt, endAt, saleType);
 
         private LaunchScheduledDomainEvent(
             Guid launchId,
@@ -19,7 +20,8 @@ namespace Modules.Launches.Domain.Launches.DomainEvents
             decimal originalPrice,
             int totalQuantity,
             DateTimeOffset startAt,
-            DateTimeOffset endAt)
+            DateTimeOffset endAt,
+            string saleType)
             : base(launchId, nameof(LaunchScheduledDomainEvent))
         {
             LaunchId = launchId;
@@ -28,6 +30,7 @@ namespace Modules.Launches.Domain.Launches.DomainEvents
             TotalQuantity = totalQuantity;
             StartAt = startAt;
             EndAt = endAt;
+            SaleType = saleType;
         }
 
         private LaunchScheduledDomainEvent() { }
@@ -38,5 +41,6 @@ namespace Modules.Launches.Domain.Launches.DomainEvents
         public int TotalQuantity { get; set; }
         public DateTimeOffset StartAt { get; set; }
         public DateTimeOffset EndAt { get; set; }
+        public string SaleType { get; set; } = null!;
     }
 }

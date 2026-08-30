@@ -1,5 +1,6 @@
 ﻿using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
+using Modules.Launches.Domain.Launches.Enums;
 using Modules.Launches.Domain.Launches.Errors;
 using Modules.Launches.Domain.Launches.Repositories;
 using Modules.Launches.Domain.Launches.ValueObjects;
@@ -32,10 +33,16 @@ namespace Modules.Launches.Application.Launches.Features.Schedule
                 return Result.Failure(LaunchErrors.NotOwnedBySeller(request.LaunchId, seller.Id));
             }
 
+            if (!Enum.TryParse<LaunchSaleType>(request.SaleType, true, out var saleType) || saleType == LaunchSaleType.None)
+            {
+                return Result.Failure(LaunchErrors.SaleTypeRequired);
+            }
+
             var scheduleResult = launch.SetSchedule(
                  LaunchPrice.Create(request.DiscountedPrice, request.OriginalPrice),
                  LaunchStock.Create(request.TotalQuantity, request.ReservedQuantity),
-                 LaunchSchedule.Create(request.StartAt, request.EndAt)
+                 LaunchSchedule.Create(request.StartAt, request.EndAt),
+                 saleType
                 );
 
             if (scheduleResult.IsFailure)
