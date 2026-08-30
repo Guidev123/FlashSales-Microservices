@@ -1,19 +1,35 @@
 using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Observability;
 using Modules.Payments.Infrastructure;
+using Serilog;
 
 const string ServiceName = "Payments";
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.AddObservabilityLogging(ServiceName);
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddCoreInfrastructure(builder.Configuration, PaymentsModule.Assemblies)
-    .AddObservabilityTracing(builder.Configuration, ServiceName)
-    .AddPaymentsModule(builder.Configuration);
+    builder.AddObservabilityLogging(ServiceName);
 
-builder
-    .Build()
-    .UseInfrastructureModule()
-    .Run();
+    builder.Services
+        .AddCoreInfrastructure(builder.Configuration, PaymentsModule.Assemblies)
+        .AddObservabilityTracing(builder.Configuration, ServiceName)
+        .AddPaymentsModule(builder.Configuration);
+
+    builder
+        .Build()
+        .UseInfrastructureModule()
+        .Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

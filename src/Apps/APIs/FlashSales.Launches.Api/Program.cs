@@ -1,19 +1,35 @@
 using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Observability;
 using Modules.Launches.Infrastructure;
+using Serilog;
 
 const string ServiceName = "Launches";
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.AddObservabilityLogging(ServiceName);
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddCoreInfrastructure(builder.Configuration, LaunchesModule.Assemblies)
-    .AddObservabilityTracing(builder.Configuration, ServiceName)
-    .AddLaunchesModule(builder.Configuration);
+    builder.AddObservabilityLogging(ServiceName);
 
-builder
-    .Build()
-    .UseInfrastructureModule()
-    .Run();
+    builder.Services
+        .AddCoreInfrastructure(builder.Configuration, LaunchesModule.Assemblies)
+        .AddObservabilityTracing(builder.Configuration, ServiceName)
+        .AddLaunchesModule(builder.Configuration);
+
+    builder
+        .Build()
+        .UseInfrastructureModule()
+        .Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

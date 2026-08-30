@@ -1,20 +1,36 @@
 using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Observability;
 using Modules.Users.Infrastructure;
+using Serilog;
 
 const string ServiceName = "Users";
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.AddObservabilityLogging(ServiceName);
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddCoreInfrastructure(builder.Configuration, UsersModule.Assemblies)
-    .AddObservabilityTracing(builder.Configuration, ServiceName)
-    .AddUsersModule(builder.Configuration);
+    builder.AddObservabilityLogging(ServiceName);
 
-var app = builder.Build();
-app.UseInfrastructureModule()
-    .MapGrpcEndpoints();
+    builder.Services
+        .AddCoreInfrastructure(builder.Configuration, UsersModule.Assemblies)
+        .AddObservabilityTracing(builder.Configuration, ServiceName)
+        .AddUsersModule(builder.Configuration);
 
-app.Run();
+    var app = builder.Build();
+    app.UseInfrastructureModule()
+        .MapGrpcEndpoints();
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application start-up failed");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
