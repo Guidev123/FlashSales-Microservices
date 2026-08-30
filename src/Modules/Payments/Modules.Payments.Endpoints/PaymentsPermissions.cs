@@ -2,6 +2,6 @@
 {
     public static class PaymentsPermissions
     {
-        public const string Checkout = "payments.checkout";
+        public const string Checkout = "payments:checkout";
     }
 }
