@@ -6,7 +6,6 @@ using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Observability;
-using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,11 +13,9 @@ using Modules.Launches.Application.Launches.Services;
 using Modules.Launches.Domain.Launches.Repositories;
 using Modules.Launches.Domain.Sellers.Repositories;
 using Modules.Launches.Endpoints;
-using Modules.Launches.Infrastructure.Authorization;
 using Modules.Launches.Infrastructure.Database;
 using Modules.Launches.Infrastructure.Database.Repositories;
 using Modules.Launches.Infrastructure.Jobs;
-using Modules.Launches.Infrastructure.Options;
 using System.Reflection;
 
 namespace Modules.Launches.Infrastructure
@@ -46,8 +43,7 @@ namespace Modules.Launches.Infrastructure
                 .AddInbox(configuration)
                 .AddEndpoints()
                 .AddJobs(configuration)
-                .AddServices()
-                .AddGrpcServices(configuration);
+                .AddModulePermissions(Schemas.Launches);
 
             return services;
         }
@@ -88,7 +84,11 @@ namespace Modules.Launches.Infrastructure
                 configuration, "Launches", Schemas.Launches,
                 Users.Contracts.IntegrationEvents.Topics.SellerActivated,
                 Users.Contracts.IntegrationEvents.Topics.UserProfileUpdated,
-                Users.Contracts.IntegrationEvents.Topics.SellerProfilePictureUpdated);
+                Users.Contracts.IntegrationEvents.Topics.SellerProfilePictureUpdated,
+                Users.Contracts.IntegrationEvents.Topics.RoleAssigned,
+                Users.Contracts.IntegrationEvents.Topics.RoleUnassigned,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionGranted,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionRevoked);
             return services;
         }
 
@@ -106,21 +106,5 @@ namespace Modules.Launches.Infrastructure
             return services;
         }
 
-        private static IServiceCollection AddServices(this IServiceCollection services)
-        {
-            services.AddTransient<IPermissionService, PermissionService>();
-            return services;
-        }
-
-        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
-                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
-
-            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
-            services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
-
-            return services;
-        }
     }
 }

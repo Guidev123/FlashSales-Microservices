@@ -4,6 +4,7 @@ using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
 using Modules.Users.Application.Users.Services;
 using Modules.Users.Domain.AccessManagement.Repositories;
+using Modules.Users.Domain.Users.DomainEvents;
 using Modules.Users.Domain.Users.Entities;
 using Modules.Users.Domain.Users.Enum;
 using Modules.Users.Domain.Users.Errors;
@@ -16,6 +17,7 @@ namespace Modules.Users.Application.Users.Features.ActivateSeller
         IUserRepository userRepository,
         IRoleRepository roleRepository,
         IIdentityProviderService identityProviderService,
+        IDomainEventCollector domainEventCollector,
         ICacheService cacheService
         ) : ICommandHandler<ActivateSellerCommand>
     {
@@ -45,6 +47,8 @@ namespace Modules.Users.Application.Users.Features.ActivateSeller
             userRepository.AddSeller(seller);
 
             await roleRepository.AssignToUserAsync("seller", request.UserId, cancellationToken);
+            domainEventCollector.Collect(RoleAssignedToUserDomainEvent.Create(request.UserId, "seller"));
+
             await identityProviderService.ActivateSellerAsync(request.IdentityProviderId, cancellationToken);
             await cacheService.RemoveAsync(PermissionResponse.GetCacheKey(request.IdentityProviderId), cancellationToken);
 

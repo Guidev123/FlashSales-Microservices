@@ -21,8 +21,7 @@ try
         .AddUsersModule(builder.Configuration);
 
     var app = builder.Build();
-    app.UseInfrastructureModule()
-        .MapGrpcEndpoints();
+    app.UseInfrastructureModule();
 
     app.Run();
 }

@@ -18,7 +18,7 @@ namespace Modules.Catalog.Infrastructure.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("catalog")
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -149,6 +149,35 @@ namespace Modules.Catalog.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("OutboxMessageConsumers", "catalog");
+                });
+
+            modelBuilder.Entity("FlashSales.Infrastructure.Authorization.RolePermission", b =>
+                {
+                    b.Property<string>("RoleName")
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<string>("PermissionCode")
+                        .HasColumnType("VARCHAR(100)");
+
+                    b.HasKey("RoleName", "PermissionCode");
+
+                    b.ToTable("RolePermissions", "catalog");
+                });
+
+            modelBuilder.Entity("FlashSales.Infrastructure.Authorization.UserRole", b =>
+                {
+                    b.Property<string>("IdentityProviderId")
+                        .HasColumnType("VARCHAR(100)");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("IdentityProviderId", "RoleName");
+
+                    b.ToTable("UserRoles", "catalog");
                 });
 
             modelBuilder.Entity("Modules.Catalog.Domain.Products.Entities.Category", b =>

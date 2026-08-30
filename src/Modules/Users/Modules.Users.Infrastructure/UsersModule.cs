@@ -23,7 +23,6 @@ using Modules.Users.Infrastructure.Authorization;
 using Modules.Users.Infrastructure.Database;
 using Modules.Users.Infrastructure.Database.Repositories;
 using Modules.Users.Infrastructure.Identity;
-using Modules.Users.Infrastructure.PublicApi;
 using System.Reflection;
 
 namespace Modules.Users.Infrastructure
@@ -50,10 +49,7 @@ namespace Modules.Users.Infrastructure
                 .AddBlobStorageHealthCheck()
                 .AddServiceBus(configuration)
                 .AddServiceBusHealthCheck()
-                .AddOutbox(configuration)
-                .AddInbox(configuration)
-                .AddPublicApi()
-                .AddGrpcServer();
+                .AddOutbox(configuration);
 
             return services;
         }
@@ -88,13 +84,6 @@ namespace Modules.Users.Infrastructure
         private static IServiceCollection AddOutbox(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddModuleOutbox<IUnitOfWork>(configuration, "Users", Schemas.Users);
-            return services;
-        }
-
-        private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddModuleInbox<IUnitOfWork>(
-                configuration, "Users", Schemas.Users);
             return services;
         }
 
@@ -139,30 +128,5 @@ namespace Modules.Users.Infrastructure
             return services;
         }
 
-        private static IServiceCollection AddPublicApi(this IServiceCollection services)
-        {
-            services.AddTransient<IUsersPublicApi, UsersPublicApi>();
-            return services;
-        }
-
-        private static IServiceCollection AddGrpcServer(this IServiceCollection services)
-        {
-            services.AddGrpc();
-            services.AddGrpcHealthChecks();
-            return services;
-        }
-
-        public static IApplicationBuilder MapGrpcEndpoints(this IApplicationBuilder app)
-        {
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapGrpcService<GetUserPermissionsEndpoint>()
-                    .RequireScope(UsersScopes.PermissionsRead);
-
-                endpoints.MapGrpcHealthChecksService().AllowAnonymous();
-            });
-
-            return app;
-        }
     }
 }

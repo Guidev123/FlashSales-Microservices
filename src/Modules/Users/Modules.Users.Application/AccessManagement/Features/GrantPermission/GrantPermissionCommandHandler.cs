@@ -2,10 +2,13 @@ using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
 using Modules.Users.Domain.AccessManagement.Errors;
 using Modules.Users.Domain.AccessManagement.Repositories;
+using Modules.Users.Domain.Users.DomainEvents;
 
 namespace Modules.Users.Application.AccessManagement.Features.GrantPermission
 {
-    internal sealed class GrantPermissionCommandHandler(IRoleRepository roleRepository) : ICommandHandler<GrantPermissionCommand>
+    internal sealed class GrantPermissionCommandHandler(
+        IRoleRepository roleRepository,
+        IDomainEventCollector domainEventCollector) : ICommandHandler<GrantPermissionCommand>
     {
         public async Task<Result> ExecuteAsync(GrantPermissionCommand request, CancellationToken cancellationToken = default)
         {
@@ -22,6 +25,8 @@ namespace Modules.Users.Application.AccessManagement.Features.GrantPermission
             }
 
             await roleRepository.GrantPermissionAsync(request.RoleName, request.PermissionCode, cancellationToken);
+
+            domainEventCollector.Collect(RolePermissionGrantedDomainEvent.Create(request.RoleName, request.PermissionCode));
 
             return Result.Success();
         }

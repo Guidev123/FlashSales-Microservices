@@ -68,7 +68,7 @@ namespace FlashSales.Infrastructure.Inbox
                         JsonSerializerSettingsExtensions.Instance)!;
 
                     var messagePublisher = messageScope.ServiceProvider.GetRequiredService<IPublisher>();
-                    await messagePublisher.PublishAsync(integrationEvent, moduleName.ToLowerInvariant(), cancellationToken);
+                    await messagePublisher.PublishAsync(integrationEvent, cancellationToken);
                 }
                 catch (Exception ex)
                 {

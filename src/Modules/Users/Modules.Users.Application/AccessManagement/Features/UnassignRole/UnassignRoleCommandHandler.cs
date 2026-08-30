@@ -1,6 +1,7 @@
 using FlashSales.Application.Messaging;
 using FlashSales.Domain.Results;
 using Modules.Users.Domain.AccessManagement.Repositories;
+using Modules.Users.Domain.Users.DomainEvents;
 using Modules.Users.Domain.Users.Errors;
 using Modules.Users.Domain.Users.Repositories;
 
@@ -8,7 +9,8 @@ namespace Modules.Users.Application.AccessManagement.Features.UnassignRole
 {
     internal sealed class UnassignRoleCommandHandler(
         IRoleRepository roleRepository,
-        IUserRepository userRepository) : ICommandHandler<UnassignRoleCommand>
+        IUserRepository userRepository,
+        IDomainEventCollector domainEventCollector) : ICommandHandler<UnassignRoleCommand>
     {
         public async Task<Result> ExecuteAsync(UnassignRoleCommand request, CancellationToken cancellationToken = default)
         {
@@ -19,6 +21,8 @@ namespace Modules.Users.Application.AccessManagement.Features.UnassignRole
             }
 
             await roleRepository.UnassignFromUserAsync(request.RoleName, request.UserId, cancellationToken);
+
+            domainEventCollector.Collect(RoleUnassignedFromUserDomainEvent.Create(request.UserId, request.RoleName));
 
             return Result.Success();
         }

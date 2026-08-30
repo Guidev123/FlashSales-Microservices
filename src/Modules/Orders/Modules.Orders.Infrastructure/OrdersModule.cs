@@ -7,7 +7,6 @@ using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Mongo;
 using FlashSales.Infrastructure.Observability;
-using FlashSales.Users.Contracts.Protos;
 using JasperFx.Events.Daemon;
 using JasperFx.Events.Projections;
 using Marten;
@@ -22,7 +21,6 @@ using Modules.Orders.Domain.Orders.DomainEvents;
 using Modules.Orders.Domain.Orders.Entities;
 using Modules.Orders.Domain.Orders.Repositories;
 using Modules.Orders.Endpoints;
-using Modules.Orders.Infrastructure.Authorization;
 using Modules.Orders.Infrastructure.Database;
 using Modules.Orders.Infrastructure.Database.EventSourcing;
 using Modules.Orders.Infrastructure.Database.Repositories;
@@ -58,9 +56,8 @@ namespace Modules.Orders.Infrastructure
                 .AddJobs(configuration)
                 .AddApiServices(configuration)
                 .AddSagasOrchestrators()
-                .AddServices()
-                .AddEventSourcing(configuration)
-                .AddGrpcServices(configuration);
+                .AddModulePermissions(Schemas.Orders)
+                .AddEventSourcing(configuration);
 
             return services;
         }
@@ -105,7 +102,11 @@ namespace Modules.Orders.Infrastructure
                 Launches.Contracts.IntegrationEvents.Topics.LaunchCancelled,
                 Payments.Contracts.IntegrationEvents.Topics.PaymentCompleted,
                 Payments.Contracts.IntegrationEvents.Topics.PaymentFailed,
-                Payments.Contracts.IntegrationEvents.Topics.PaymentRefunded);
+                Payments.Contracts.IntegrationEvents.Topics.PaymentRefunded,
+                Users.Contracts.IntegrationEvents.Topics.RoleAssigned,
+                Users.Contracts.IntegrationEvents.Topics.RoleUnassigned,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionGranted,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionRevoked);
             return services;
         }
 
@@ -137,23 +138,6 @@ namespace Modules.Orders.Infrastructure
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
             services.AddCustomHttpClientWithOnBehalfOfAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
-
-            return services;
-        }
-
-        private static IServiceCollection AddServices(this IServiceCollection services)
-        {
-            services.AddTransient<IPermissionService, PermissionService>();
-            return services;
-        }
-
-        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
-                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
-
-            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
-            services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
 
             return services;
         }

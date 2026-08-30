@@ -51,6 +51,30 @@
                 "Name": "orders.sub"
               }
             ]
+          },
+          {
+            "Name": "flash-sales.users.role-assigned",
+            "Subscriptions": [
+              { "Name": "orders.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-unassigned",
+            "Subscriptions": [
+              { "Name": "orders.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-granted",
+            "Subscriptions": [
+              { "Name": "orders.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-revoked",
+            "Subscriptions": [
+              { "Name": "orders.sub" }
+            ]
           }
         ]
       }

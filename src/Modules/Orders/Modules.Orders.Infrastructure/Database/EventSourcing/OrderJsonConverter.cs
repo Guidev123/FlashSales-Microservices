@@ -6,14 +6,6 @@ using Modules.Orders.Domain.Orders.Entities;
 
 namespace Modules.Orders.Infrastructure.Database.EventSourcing
 {
-    /// <summary>
-    /// Order's properties are all private-set by design (state only changes through Apply), so the
-    /// default reflection-based System.Text.Json converter can't round-trip Marten's Inline snapshot
-    /// without [JsonInclude]/[JsonConstructor] on the domain type itself. This converter takes over
-    /// Order's (de)serialization entirely so the domain stays free of persistence-format attributes.
-    /// Constructor and property access are compiled once into cached delegates (below) instead of
-    /// resolved via reflection on every read/write.
-    /// </summary>
     internal sealed class OrderJsonConverter : JsonConverter<Order>
     {
         private static readonly Func<Order> Construct = BuildConstructor();
@@ -78,8 +70,6 @@ namespace Modules.Orders.Infrastructure.Database.EventSourcing
 
         private static OrderMember[] BuildMembers()
         {
-            // Includes the two Entity base properties (Id, CreatedOn) — Order owns its full JSON shape,
-            // so nothing about persistence needs to live on the shared Entity base either.
             string[] names =
             [
                 "Id", "CreatedOn", "CustomerId", "LaunchId", "SellerId", "ProductId", "Quantity",

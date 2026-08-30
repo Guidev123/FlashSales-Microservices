@@ -151,6 +151,35 @@ namespace Modules.Payments.Infrastructure.Database.Migrations
                     b.ToTable("OutboxMessageConsumers", "payments");
                 });
 
+            modelBuilder.Entity("FlashSales.Infrastructure.Authorization.RolePermission", b =>
+                {
+                    b.Property<string>("RoleName")
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<string>("PermissionCode")
+                        .HasColumnType("VARCHAR(100)");
+
+                    b.HasKey("RoleName", "PermissionCode");
+
+                    b.ToTable("RolePermissions", "payments");
+                });
+
+            modelBuilder.Entity("FlashSales.Infrastructure.Authorization.UserRole", b =>
+                {
+                    b.Property<string>("IdentityProviderId")
+                        .HasColumnType("VARCHAR(100)");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("VARCHAR(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("IdentityProviderId", "RoleName");
+
+                    b.ToTable("UserRoles", "payments");
+                });
+
             modelBuilder.Entity("Modules.Payments.Domain.Payments.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")

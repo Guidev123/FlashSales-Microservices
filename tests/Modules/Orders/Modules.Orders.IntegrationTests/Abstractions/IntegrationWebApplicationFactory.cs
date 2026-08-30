@@ -215,15 +215,6 @@ namespace Modules.Orders.IntegrationTests.Abstractions
 
         private static void RemoveHostedServices(IServiceCollection services)
         {
-            // Removes the app's own periodic jobs (tests invoke their command handlers directly instead)
-            // AND Marten's async daemon hosted service. Keeping the daemon running was tried (it is the
-            // Marten-documented way to get real subscription delivery in tests) but WebApplicationFactory
-            // builds a throwaway host to back Services before building the real one; the daemon started
-            // against the throwaway host outlives it and throws ObjectDisposedException on its disposed
-            // LoggerFactory the moment anything logs — confirmed via a full suite run (46/62 failing with
-            // that exact exception). A manually-driven daemon avoids that crash but doesn't reliably
-            // deliver events to Subscriptions either, so the Mongo-dependent read tests were removed
-            // rather than kept as unreliable/skipped coverage — the write side is fully covered.
             var descriptors = services
                 .Where(d => d.ServiceType == typeof(IHostedService))
                 .ToList();

@@ -1,7 +1,9 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.Authorization;
 using FlashSales.Application.Bus;
 using FlashSales.Application.Inbox;
 using FlashSales.Application.Outbox;
+using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Database;
 using FlashSales.Infrastructure.Inbox;
 using FlashSales.Infrastructure.Outbox;
@@ -98,6 +100,19 @@ namespace FlashSales.Infrastructure.Extensions
 
             services.AddHostedService(
                 sp => sp.GetRequiredService<ModuleInboxConsumer<TUnitOfWork>>());
+
+            return services;
+        }
+
+        public static IServiceCollection AddModulePermissions(
+            this IServiceCollection services,
+            string schema)
+        {
+            services.AddScoped<IPermissionRepository>(sp =>
+                new PermissionRepository(sp.GetRequiredService<IUnitOfWork>(), schema));
+
+            services.AddTransient<IPermissionService>(sp =>
+                new PermissionService(sp.GetRequiredService<IUnitOfWork>(), schema));
 
             return services;
         }

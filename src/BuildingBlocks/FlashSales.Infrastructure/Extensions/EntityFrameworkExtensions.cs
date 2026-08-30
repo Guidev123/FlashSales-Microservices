@@ -1,4 +1,5 @@
 ﻿using FlashSales.Application.Abstractions;
+using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Inbox;
 using FlashSales.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,12 @@ namespace FlashSales.Infrastructure.Extensions
             modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration());
             modelBuilder.ApplyConfiguration(new InboxMessageConfiguration());
             modelBuilder.ApplyConfiguration(new InboxMessageConsumerConfiguration());
+        }
+
+        public static void AddPermissions(this ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfiguration(new UserRoleConfiguration());
+            modelBuilder.ApplyConfiguration(new RolePermissionConfiguration());
         }
 
         internal static CommitResult ToCommitResult(this DbUpdateException ex)

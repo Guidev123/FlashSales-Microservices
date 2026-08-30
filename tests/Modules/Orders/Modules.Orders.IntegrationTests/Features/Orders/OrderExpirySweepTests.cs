@@ -92,10 +92,6 @@ namespace Modules.Orders.IntegrationTests.Features.Orders
             order.Status.Should().Be(OrderStatus.Cancelled);
         }
 
-        // Order now lives as a Marten Inline document (orders_events.mt_doc_order), not the old EF table —
-        // rewrite the "ExpiresAt" key directly inside the stored JSONB. The replacement value is produced
-        // by the exact same serializer Marten uses (UseSystemTextJsonForSerialization), so it round-trips
-        // correctly instead of risking a Postgres-vs-.NET date-format mismatch.
         private async Task ForceExpiredAsync(Guid orderId)
         {
             var expiredAtJson = JsonSerializer.Serialize(DateTimeOffset.UtcNow.AddHours(-1));

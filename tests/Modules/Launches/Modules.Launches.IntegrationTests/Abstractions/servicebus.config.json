@@ -11,6 +11,30 @@
                 "Name": "launches.sub"
               }
             ]
+          },
+          {
+            "Name": "flash-sales.users.role-assigned",
+            "Subscriptions": [
+              { "Name": "launches.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-unassigned",
+            "Subscriptions": [
+              { "Name": "launches.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-granted",
+            "Subscriptions": [
+              { "Name": "launches.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-revoked",
+            "Subscriptions": [
+              { "Name": "launches.sub" }
+            ]
           }
         ]
       }

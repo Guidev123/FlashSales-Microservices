@@ -18,6 +18,7 @@ namespace Modules.Payments.Infrastructure.Database
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             modelBuilder.AddOutboxAndInbox();
+            modelBuilder.AddPermissions();
 
             base.OnModelCreating(modelBuilder);
         }

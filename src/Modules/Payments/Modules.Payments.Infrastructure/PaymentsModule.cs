@@ -6,7 +6,6 @@ using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Observability;
-using FlashSales.Users.Contracts.Protos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,12 +14,10 @@ using Modules.Payments.Application.Payments.Services;
 using Modules.Payments.Contracts;
 using Modules.Payments.Domain.Payments.Repositories;
 using Modules.Payments.Endpoints;
-using Modules.Payments.Infrastructure.Authorization;
 using Modules.Payments.Infrastructure.Database;
 using Modules.Payments.Infrastructure.Database.Repositories;
 using Modules.Payments.Infrastructure.Gateway;
 using Modules.Payments.Infrastructure.Jobs;
-using Modules.Payments.Infrastructure.Options;
 using System.Reflection;
 
 namespace Modules.Payments.Infrastructure
@@ -49,7 +46,7 @@ namespace Modules.Payments.Infrastructure
                 .AddGateway(configuration)
                 .AddJobs(configuration)
                 .AddServices()
-                .AddGrpcServices(configuration);
+                .AddModulePermissions(Schemas.Payments);
 
             return services;
         }
@@ -85,7 +82,11 @@ namespace Modules.Payments.Infrastructure
         private static IServiceCollection AddInbox(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddModuleInbox<IUnitOfWork>(
-                configuration, "Payments", Schemas.Payments);
+                configuration, "Payments", Schemas.Payments,
+                Users.Contracts.IntegrationEvents.Topics.RoleAssigned,
+                Users.Contracts.IntegrationEvents.Topics.RoleUnassigned,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionGranted,
+                Users.Contracts.IntegrationEvents.Topics.RolePermissionRevoked);
             return services;
         }
 
@@ -112,18 +113,6 @@ namespace Modules.Payments.Infrastructure
         private static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddTransient<PaymentOutcomeProcessor>();
-            services.AddTransient<IPermissionService, PermissionService>();
-
-            return services;
-        }
-
-        private static IServiceCollection AddGrpcServices(this IServiceCollection services, IConfiguration configuration)
-        {
-            var options = configuration.GetSection(ApiOptions.SectionName).Get<ApiOptions>()
-                ?? throw new InvalidOperationException($"Configuration section '{ApiOptions.SectionName}' is missing.");
-
-            services.AddCustomGrpcClientWithClientCredentialsAuth<UserPermissionsService.UserPermissionsServiceClient>(configuration, options.UsersApi);
-            services.AddGrpcServiceHealthCheck("users-grpc", options.UsersApi.BaseUrl);
 
             return services;
         }

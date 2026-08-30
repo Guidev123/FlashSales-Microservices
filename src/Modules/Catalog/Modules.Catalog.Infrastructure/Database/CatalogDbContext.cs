@@ -22,6 +22,7 @@ namespace Modules.Catalog.Infrastructure.Database
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             modelBuilder.AddOutboxAndInbox();
+            modelBuilder.AddPermissions();
 
             base.OnModelCreating(modelBuilder);
         }

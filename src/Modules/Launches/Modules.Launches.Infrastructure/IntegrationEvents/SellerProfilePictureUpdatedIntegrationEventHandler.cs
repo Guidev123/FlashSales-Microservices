@@ -1,13 +1,10 @@
-using FlashSales.Application.Inbox;
 using FlashSales.Domain.DomainObjects;
-using MidR.Abstractions;
 using MidR.Interfaces;
 using Modules.Launches.Application.Sellers.Features.UpdateProfilePicture;
 using Modules.Users.Contracts.IntegrationEvents;
 
 namespace Modules.Launches.Infrastructure.IntegrationEvents
 {
-    [DirectQueue(InboxRoutes.Launches)]
     internal sealed class SellerProfilePictureUpdatedIntegrationEventHandler(ISender sender)
         : INotificationHandler<SellerProfilePictureUpdatedIntegrationEvent>
     {

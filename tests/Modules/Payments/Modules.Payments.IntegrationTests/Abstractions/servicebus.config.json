@@ -3,7 +3,32 @@
     "Namespaces": [
       {
         "Name": "sbemulatorns",
-        "Topics": []
+        "Topics": [
+          {
+            "Name": "flash-sales.users.role-assigned",
+            "Subscriptions": [
+              { "Name": "payments.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-unassigned",
+            "Subscriptions": [
+              { "Name": "payments.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-granted",
+            "Subscriptions": [
+              { "Name": "payments.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-revoked",
+            "Subscriptions": [
+              { "Name": "payments.sub" }
+            ]
+          }
+        ]
       }
     ],
     "Logging": {
