@@ -15,6 +15,9 @@
     <Project Path="src/BuildingBlocks/FlashSales.Infrastructure/FlashSales.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/AnalyticsCollector/">
+    <Project Path="src/Modules/AnalyticsCollector/Modules.AnalyticsCollector.Core/Modules.AnalyticsCollector.Core.csproj" Id="fe2c2ccf-e9f0-4777-bd2a-025e0547ba6c" />
+  </Folder>
   <Folder Name="/src/Modules/Catalog/">
     <Project Path="src/Modules/Catalog/Modules.Catalog.Application/Modules.Catalog.Application.csproj" />
     <Project Path="src/Modules/Catalog/Modules.Catalog.Contracts/Modules.Catalog.Contracts.csproj" Id="a8ff017d-9d55-47ac-9cb9-96106bdb2d31" />
