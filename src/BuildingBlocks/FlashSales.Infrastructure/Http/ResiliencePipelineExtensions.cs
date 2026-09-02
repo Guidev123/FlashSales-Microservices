@@ -5,17 +5,20 @@ namespace FlashSales.Infrastructure.Http
 {
     public static class ResiliencePipelineExtensions
     {
-        public static void ConfigureResilience(this ResiliencePipelineBuilder<HttpResponseMessage> pipeline, HttpResilienceOptions options)
+        public static void ConfigureResilience(this ResiliencePipelineBuilder<HttpResponseMessage> pipeline, HttpResilienceOptions options, bool includeRetry = true)
         {
             pipeline.AddTimeout(options.Timeout);
 
-            pipeline.AddRetry(new HttpRetryStrategyOptions
+            if (includeRetry)
             {
-                MaxRetryAttempts = options.MaxRetriesAttempts,
-                BackoffType = DelayBackoffType.Exponential,
-                UseJitter = true,
-                Delay = options.DefaultRetryDelay
-            });
+                pipeline.AddRetry(new HttpRetryStrategyOptions
+                {
+                    MaxRetryAttempts = options.MaxRetriesAttempts,
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true,
+                    Delay = options.DefaultRetryDelay
+                });
+            }
 
             pipeline.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
             {

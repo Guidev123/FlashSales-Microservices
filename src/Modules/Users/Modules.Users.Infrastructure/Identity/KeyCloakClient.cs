@@ -14,7 +14,7 @@ namespace Modules.Users.Infrastructure.Identity
 
         private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy =
             HttpPolicyExtensions.HandleTransientHttpError()
-                .WaitAndRetryAsync(options.Value.MaxRetryAttempts,
+                .WaitAndRetryAsync(options.Value.DeleteMaxRetryAttempts,
                         retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         internal async Task<string> RegisterAsync(UserRepresentationDto user, CancellationToken cancellationToken = default)

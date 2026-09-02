@@ -9,6 +9,6 @@
         public string BaseUrl { get; set; } = string.Empty;
         public string ConfidentialClientId { get; set; } = string.Empty;
         public string ConfidentialClientSecret { get; set; } = string.Empty;
-        public int MaxRetryAttempts { get; set; } = 3;
+        public int DeleteMaxRetryAttempts { get; set; } = 3;
     }
 }
