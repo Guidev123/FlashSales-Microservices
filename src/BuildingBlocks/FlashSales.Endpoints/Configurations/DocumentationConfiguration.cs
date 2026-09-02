@@ -16,6 +16,8 @@ namespace FlashSales.Endpoints.Configurations
                     document.Components ??= new OpenApiComponents();
                     document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
 
+                    var authority = configuration["Authentication:Authority"]!.TrimEnd('/');
+
                     document.Components.SecuritySchemes["oauth2"] = new OpenApiSecurityScheme
                     {
                         Type = SecuritySchemeType.OAuth2,
@@ -23,8 +25,8 @@ namespace FlashSales.Endpoints.Configurations
                         {
                             AuthorizationCode = new OpenApiOAuthFlow
                             {
-                                AuthorizationUrl = new Uri(configuration["Keycloak:AuthorizationUrl"]!),
-                                TokenUrl = new Uri(configuration["Keycloak:TokenUrl"]!),
+                                AuthorizationUrl = new Uri($"{authority}/protocol/openid-connect/auth"),
+                                TokenUrl = new Uri($"{authority}/protocol/openid-connect/token"),
                                 Scopes = new Dictionary<string, string>
                                 {
                                     { "openid", "OpenID Connect" },
@@ -52,7 +54,7 @@ namespace FlashSales.Endpoints.Configurations
             {
                 c.SwaggerEndpoint("/openapi/v1.json", "FlashSales API v1");
                 c.DisplayRequestDuration();
-                c.OAuthClientId(configuration["Keycloak:SwaggerClientId"]);
+                c.OAuthClientId(configuration["Swagger:ClientId"]);
                 c.OAuthAppName("FlashSales Swagger");
                 c.OAuthScopeSeparator(" ");
                 c.OAuthUsePkce();

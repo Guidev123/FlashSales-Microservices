@@ -7,6 +7,7 @@ using FlashSales.Application.Bus;
 using FlashSales.Application.Cache;
 using FlashSales.Application.Messaging;
 using FlashSales.Application.Storage;
+using FlashSales.Endpoints.Configurations;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Authentication;
 using FlashSales.Infrastructure.Authorization;
@@ -43,7 +44,7 @@ namespace FlashSales.Infrastructure
                 .AddExceptionHandler()
                 .AddCoreHealthChecks(configuration);
 
-            services.AddOpenApi();
+            services.AddOpenApiConfig(configuration);
 
             services.AddTransient<CallerLoggingMiddleware>();
             services.AddTransient<AccountActivationMiddleware>();
@@ -178,7 +179,11 @@ namespace FlashSales.Infrastructure
 
             if (!app.Environment.IsEnvironment("Testing"))
             {
-                app.MapOpenApi().AllowAnonymous();
+                if (app.Environment.IsDevelopment())
+                {
+                    app.MapOpenApi().AllowAnonymous();
+                    app.UseOpenApiConfig(app.Configuration);
+                }
 
                 app.MapHealthChecks("/health/live", new HealthCheckOptions
                 {

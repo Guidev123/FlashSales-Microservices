@@ -149,7 +149,8 @@
         "catalog.read", "catalog.write",
         "launches.read", "launches.write",
         "orders.read", "orders.write",
-        "users.read", "users.write"
+        "users.read", "users.write",
+        "payments.write"
       ],
       "optionalClientScopes": ["offline_access", "address", "phone", "microprofile-jwt", "organization"],
       "protocolMappers": [
@@ -489,7 +490,7 @@
       "id": "b2c3d4e5-3000-3000-3000-000000000002",
       "clientId": "flash-sales-users-admin",
       "name": "Users service — Keycloak admin",
-      "description": "Confidential client used only by the Users service to call the Keycloak Admin REST API (create users, set attributes, assign roles). The sole holder of manage-users/view-users in this realm.",
+      "description": "Confidential client used only by the Users service to call the Keycloak Admin REST API (create users, set attributes, assign roles). The sole holder of manage-users/view-users/view-realm in this realm — view-realm is required to look up a realm role's id (GET /roles/{name}) before assigning it to a user.",
       "publicClient": false,
       "protocol": "openid-connect",
       "enabled": true,
@@ -502,6 +503,109 @@
       "authorizationServicesEnabled": false,
       "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
       "optionalClientScopes": []
+    },
+    {
+      "id": "b2c3d4e5-4000-4000-4000-000000000001",
+      "clientId": "flash-sales-swagger",
+      "name": "FlashSales Swagger UI",
+      "description": "Public client for the interactive OAuth2 (Authorization Code + PKCE) login button inside each service's own Swagger UI. Not used by the SPA — that's flash-sales-public.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "redirectUris": [
+        "https://localhost:7239/swagger/oauth2-redirect.html",
+        "http://localhost:5062/swagger/oauth2-redirect.html",
+        "https://localhost:7172/swagger/oauth2-redirect.html",
+        "http://localhost:5116/swagger/oauth2-redirect.html",
+        "https://localhost:7229/swagger/oauth2-redirect.html",
+        "http://localhost:5070/swagger/oauth2-redirect.html",
+        "https://localhost:7106/swagger/oauth2-redirect.html",
+        "http://localhost:5063/swagger/oauth2-redirect.html",
+        "https://localhost:7088/swagger/oauth2-redirect.html",
+        "http://localhost:5051/swagger/oauth2-redirect.html"
+      ],
+      "webOrigins": [
+        "https://localhost:7239", "http://localhost:5062",
+        "https://localhost:7172", "http://localhost:5116",
+        "https://localhost:7229", "http://localhost:5070",
+        "https://localhost:7106", "http://localhost:5063",
+        "https://localhost:7088", "http://localhost:5051"
+      ],
+      "defaultClientScopes": [
+        "web-origins", "acr", "profile", "roles", "basic", "email",
+        "catalog.read", "catalog.write",
+        "launches.read", "launches.write",
+        "orders.read", "orders.write",
+        "users.read", "users.write"
+      ],
+      "optionalClientScopes": ["offline_access"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000101",
+          "name": "audience-catalog",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-catalog",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000102",
+          "name": "audience-launches",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-launches",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000103",
+          "name": "audience-orders",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-orders",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000104",
+          "name": "audience-payments",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-payments",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000105",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -510,7 +614,7 @@
       "enabled": true,
       "serviceAccountClientId": "flash-sales-users-admin",
       "clientRoles": {
-        "realm-management": ["view-users", "manage-users"]
+        "realm-management": ["view-users", "manage-users", "view-realm"]
       }
     }
   ],
@@ -1295,6 +1399,16 @@
       "id": "c1a2b3c4-1000-1000-1000-000000000008",
       "name": "users.write",
       "description": "Write access to the Users API.",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-000000000009",
+      "name": "payments.write",
+      "description": "Write access to the Payments API (checkout).",
       "protocol": "openid-connect",
       "attributes": {
         "include.in.token.scope": "true",
