@@ -107,5 +107,9 @@ namespace Modules.Users.Domain.Users.Errors
         public static readonly Error FailedToParseAccountType = Error.Invalid(
             "Users.FailedToParseAccountType",
             "Something has failed to parse account type");
+
+        public static readonly Error FailedToDeleteUserFromIdentityProvider = Error.Problem(
+            "Users.FailedToDeleteUserFromIdentityProvider",
+            "Something has failed to delete user from Identity Provider");
     }
 }

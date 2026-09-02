@@ -1,5 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using Modules.Users.Application.Users.Dtos;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Retry;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
@@ -8,6 +11,11 @@ namespace Modules.Users.Infrastructure.Identity
     internal sealed class KeyCloakClient(HttpClient httpClient, IOptions<KeyCloakOptions> options)
     {
         private readonly KeyCloakOptions _options = options.Value;
+
+        private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy =
+            HttpPolicyExtensions.HandleTransientHttpError()
+                .WaitAndRetryAsync(options.Value.MaxRetryAttempts,
+                        retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         internal async Task<string> RegisterAsync(UserRepresentationDto user, CancellationToken cancellationToken = default)
         {
@@ -18,7 +26,7 @@ namespace Modules.Users.Infrastructure.Identity
             return ExtractIdentityIdFromLocationHeader(httpResponseMessage);
         }
 
-        internal async Task SetUserAttributesAsync(string userId, Dictionary<string, List<string>> attributes, CancellationToken cancellationToken = default)
+        internal async Task SetUserAttributesAsync(string identityProviderId, Dictionary<string, List<string>> attributes, CancellationToken cancellationToken = default)
         {
             var payload = new
             {
@@ -27,14 +35,14 @@ namespace Modules.Users.Infrastructure.Identity
             };
 
             var httpResponseMessage = await httpClient.PutAsJsonAsync(
-                $"{_options.CurrentRealm}/users/{userId}",
+                $"{_options.CurrentRealm}/users/{identityProviderId}",
                 payload,
                 cancellationToken);
 
             httpResponseMessage.EnsureSuccessStatusCode();
         }
 
-        internal async Task AssignRoleAsync(string userId, string roleName, CancellationToken cancellationToken = default)
+        internal async Task AssignRoleAsync(string identityProviderId, string roleName, CancellationToken cancellationToken = default)
         {
             var roleResponse = await httpClient.GetAsync(
                 $"{_options.CurrentRealm}/roles/{roleName}",
@@ -45,9 +53,18 @@ namespace Modules.Users.Infrastructure.Identity
             var role = await roleResponse.Content.ReadFromJsonAsync<RoleRepresentationDto>(cancellationToken: cancellationToken);
 
             var httpResponseMessage = await httpClient.PostAsJsonAsync(
-                $"{_options.CurrentRealm}/users/{userId}/role-mappings/realm",
+                $"{_options.CurrentRealm}/users/{identityProviderId}/role-mappings/realm",
                 new[] { role },
                 cancellationToken);
+
+            httpResponseMessage.EnsureSuccessStatusCode();
+        }
+
+        internal async Task DeleteAsync(string identityProviderId, CancellationToken cancellationToken = default)
+        {
+            var httpResponseMessage = await _retryPolicy.ExecuteAsync(() => httpClient.DeleteAsync(
+                $"{_options.CurrentRealm}/users/{identityProviderId}",
+                cancellationToken));
 
             httpResponseMessage.EnsureSuccessStatusCode();
         }

@@ -62,7 +62,12 @@ namespace Modules.Users.Infrastructure.Identity
             {
                 var identityId = await keyCloakClient.RegisterAsync(request, cancellationToken);
 
-                await keyCloakClient.AssignRoleAsync(identityId, ACTIVATED_ROLE, cancellationToken);
+                var roleAssignmentResult = await ActivateCustomerAsync(identityId, cancellationToken);
+                if (roleAssignmentResult.IsFailure)
+                {
+                    await DeleteUserAsync(identityId, cancellationToken);
+                    return Result.Failure<string>(UserErrors.FailedToActivateCustomer);
+                }
 
                 return string.IsNullOrWhiteSpace(identityId)
                     ? Result.Failure<string>(Error.NullValue)
@@ -85,6 +90,20 @@ namespace Modules.Users.Infrastructure.Identity
             catch
             {
                 return Result.Failure(UserErrors.FailedToSetAttributesInIdentityProvider);
+            }
+        }
+
+        private async Task<Result> DeleteUserAsync(string identityProviderId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await keyCloakClient.DeleteAsync(identityProviderId, cancellationToken);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "Failed to delete user with Identity Provider Id: {IdentityProviderId}", identityProviderId);
+                return Result.Failure(UserErrors.FailedToDeleteUserFromIdentityProvider);
             }
         }
     }

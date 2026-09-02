@@ -97,9 +97,6 @@ namespace Modules.Users.Infrastructure
         {
             services.Configure<KeyCloakOptions>(configuration.GetSection(KeyCloakOptions.SectionName));
 
-            services.Configure<HttpResilienceOptions>(KeyCloakOptions.SectionName,
-                configuration.GetSection($"{KeyCloakOptions.SectionName}:Resilience"));
-
             services.AddTransient<KeyCloakAuthDelegatingHandler>();
 
             services.AddHttpClient<KeyCloakClient>((serviceProvider, httpClient) =>
@@ -127,6 +124,5 @@ namespace Modules.Users.Infrastructure
             services.AddEndpoints(typeof(EndpointsModule).Assembly);
             return services;
         }
-
     }
 }
