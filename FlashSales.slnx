@@ -22,6 +22,9 @@
     <Project Path="src/Modules/Catalog/Modules.Catalog.Endpoints/Modules.Catalog.Endpoints.csproj" />
     <Project Path="src/Modules/Catalog/Modules.Catalog.Infrastructure/Modules.Catalog.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Modules/Coupons/">
+    <Project Path="src/Modules/Coupons/Modules.Coupons.Domain/Modules.Coupons.Domain.csproj" Id="5f154965-caf3-498a-aa85-9a028906855b" />
+  </Folder>
   <Folder Name="/src/Modules/Launches/">
     <Project Path="src/Modules/Launches/Modules.Launches.Application/Modules.Launches.Application.csproj" />
     <Project Path="src/Modules/Launches/Modules.Launches.Contracts/Modules.Launches.Contracts.csproj" Id="fb795f63-7afc-4d43-b003-120c9de5e1b6" />
