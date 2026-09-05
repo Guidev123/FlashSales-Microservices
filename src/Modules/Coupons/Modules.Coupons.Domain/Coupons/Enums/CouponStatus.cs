@@ -7,6 +7,7 @@
         Active,
         Paused,
         Expired,
-        Canceled
+        Canceled,
+        Exhausted
     }
 }

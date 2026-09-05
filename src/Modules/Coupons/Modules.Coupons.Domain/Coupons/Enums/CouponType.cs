@@ -6,4 +6,4 @@
         Percentage,
         Fixed
     }
-}   
+}
