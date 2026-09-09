@@ -100,8 +100,7 @@ namespace Modules.Coupons.Domain.Coupons.Errors
             "Customer id must not be empty");
 
         public static Error OutsideValidityWindow(
-            CouponValidity validity,
-            DateTimeOffset currentDate)
+            CouponValidity validity)
             => Error.Problem(
                 "Coupons.OutsideValidityWindow",
                 $"The coupon is outside its validity period. " +
@@ -119,5 +118,9 @@ namespace Modules.Coupons.Domain.Coupons.Errors
         public static readonly Error CustomerRedemptionLimitReached = Error.Problem(
             "Coupons.CustomerRedemptionLimitReached",
             "This customer has already reached the maximum number of redemptions allowed for this coupon.");
+
+        public static readonly Error InvalidDiscountParameters = Error.Invalid(
+            "Coupons.InvalidDiscountParameters",
+            "Invalid discount parameters. Please check the discount type and values.");
     }
 }

@@ -21,8 +21,10 @@ namespace Modules.Coupons.Domain.Coupons.ValueObjects
         public decimal Value { get; }
         public decimal? MaxDiscountAmount { get; }
 
-        public static CouponDiscount Create(CouponType type, decimal value, decimal? maxDiscountAmount = null) =>
-            new(type, value, maxDiscountAmount);
+        public static CouponDiscount CreatePercentage(decimal value, decimal? maxDiscountAmount = null) =>
+            new(CouponType.Percentage, value, maxDiscountAmount);
+        public static CouponDiscount CreateFixed(decimal value, decimal? maxDiscountAmount = null) =>
+            new(CouponType.Fixed, value, maxDiscountAmount);
 
         internal decimal Apply(decimal orderAmount)
         {

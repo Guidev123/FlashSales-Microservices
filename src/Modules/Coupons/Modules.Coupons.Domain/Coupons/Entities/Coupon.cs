@@ -92,7 +92,7 @@ namespace Modules.Coupons.Domain.Coupons.Entities
 
             if (!Validity.IsWithin(currentDate))
             {
-                return Result.Failure<decimal>(CouponErrors.OutsideValidityWindow(Validity, currentDate));
+                return Result.Failure<decimal>(CouponErrors.OutsideValidityWindow(Validity));
             }
 
             if (MinimumOrderAmount is { } min && orderAmount < min)

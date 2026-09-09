@@ -1,5 +1,6 @@
 ﻿using FlashSales.Domain.DomainObjects;
 using Modules.Coupons.Domain.Coupons.Entities;
+using Modules.Coupons.Domain.Coupons.Enums;
 using Modules.Coupons.Domain.Coupons.Errors;
 using Modules.Coupons.Domain.Coupons.ValueObjects;
 
@@ -23,9 +24,9 @@ namespace Modules.Coupons.Domain.Coupons.Builders
             _code = code;
         }
 
-        public CouponBuilder WithUsage(CouponUsage usage)
+        public CouponBuilder WithUsage(int maxRedemptions)
         {
-            _usage = usage;
+            _usage = CouponUsage.Create(maxRedemptions);
             return this;
         }
 
@@ -35,15 +36,17 @@ namespace Modules.Coupons.Domain.Coupons.Builders
             return this;
         }
 
-        public CouponBuilder WithMinimumOrderAmount(decimal amount)
+        public CouponBuilder WithMinimumOrderAmount(decimal? amount)
         {
-            _minimumOrderAmount = amount;
+            if (!amount.HasValue) return this;
+            _minimumOrderAmount = amount.Value;
             return this;
         }
 
-        public CouponBuilder WithMaxRedemptionsPerCustomer(int quantity)
+        public CouponBuilder WithMaxRedemptionsPerCustomer(int? quantity)
         {
-            _maxRedemptionsPerCustomer = quantity;
+            if (!quantity.HasValue) return this;
+            _maxRedemptionsPerCustomer = quantity.Value;
             return this;
         }
 
@@ -53,16 +56,31 @@ namespace Modules.Coupons.Domain.Coupons.Builders
             return this;
         }
 
-        public CouponBuilder WithoutRedemptionLimit()
+        public CouponBuilder WithoutRedemptionPerCustomerLimit()
         {
             _maxRedemptionsPerCustomer = null;
             return this;
         }
 
-        public CouponBuilder WithDiscount(CouponDiscount discount)
+        public CouponBuilder WithDiscount(
+            decimal? discountAmount,
+            decimal? discountPercentage,
+            decimal? maxDiscountAmount
+            )
         {
-            _discount = discount;
-            return this;
+            if (discountAmount is null && discountPercentage is not null)
+            {
+                _discount = CouponDiscount.CreatePercentage(discountPercentage.Value, maxDiscountAmount);
+                return this;
+            }
+
+            if (discountPercentage is null && discountAmount is not null)
+            {
+                _discount = CouponDiscount.CreateFixed(discountAmount.Value, maxDiscountAmount);
+                return this;
+            }
+
+            throw new DomainException(CouponErrors.InvalidDiscountParameters.Description);
         }
 
         public Coupon Build()
