@@ -1,9 +1,7 @@
 using FlashSales.Application.Abstractions;
-using FlashSales.Application.Authorization;
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure;
 using FlashSales.Infrastructure.Extensions;
-using FlashSales.Infrastructure.Http;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Observability;
 using Microsoft.EntityFrameworkCore;
