@@ -91,7 +91,8 @@
               { "Name": "orders.sub" },
               { "Name": "payments.sub" },
               { "Name": "catalog.sub" },
-              { "Name": "launches.sub" }
+              { "Name": "launches.sub" },
+              { "Name": "coupons.sub" }
             ]
           },
           {
@@ -100,7 +101,8 @@
               { "Name": "orders.sub" },
               { "Name": "payments.sub" },
               { "Name": "catalog.sub" },
-              { "Name": "launches.sub" }
+              { "Name": "launches.sub" },
+              { "Name": "coupons.sub" }
             ]
           },
           {
@@ -109,7 +111,8 @@
               { "Name": "orders.sub" },
               { "Name": "payments.sub" },
               { "Name": "catalog.sub" },
-              { "Name": "launches.sub" }
+              { "Name": "launches.sub" },
+              { "Name": "coupons.sub" }
             ]
           },
           {
@@ -118,7 +121,8 @@
               { "Name": "orders.sub" },
               { "Name": "payments.sub" },
               { "Name": "catalog.sub" },
-              { "Name": "launches.sub" }
+              { "Name": "launches.sub" },
+              { "Name": "coupons.sub" }
             ]
           }
         ]

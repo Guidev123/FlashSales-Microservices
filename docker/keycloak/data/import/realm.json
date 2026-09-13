@@ -549,7 +549,7 @@
       "id": "b2c3d4e5-3000-3000-3000-000000000002",
       "clientId": "flash-sales-users-admin",
       "name": "Users service — Keycloak admin",
-      "description": "Confidential client used only by the Users service to call the Keycloak Admin REST API (create users, set attributes, assign roles). The sole holder of manage-users/view-users/view-realm in this realm — view-realm is required to look up a realm role's id (GET /roles/{name}) before assigning it to a user.",
+      "description": "Confidential client used only by the Users service to call the Keycloak Admin REST API (create users, assign roles). Holds manage-users/view-users/view-realm. Never used by a human.",
       "publicClient": false,
       "protocol": "openid-connect",
       "enabled": true,
