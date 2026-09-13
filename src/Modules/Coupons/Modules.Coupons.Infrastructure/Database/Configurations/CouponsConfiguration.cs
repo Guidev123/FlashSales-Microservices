@@ -55,12 +55,10 @@ namespace Modules.Coupons.Infrastructure.Database.Configurations
             builder.OwnsOne(c => c.Validity, validity =>
             {
                 validity.Property(vp => vp.ValidUntil)
-                    .HasColumnType("DATETIME")
                     .HasColumnName("ValidUntil")
                     .IsRequired();
 
                 validity.Property(vp => vp.ValidFrom)
-                    .HasColumnType("DATETIME")
                     .HasColumnName("ValidFrom")
                     .IsRequired();
             });
@@ -68,12 +66,10 @@ namespace Modules.Coupons.Infrastructure.Database.Configurations
             builder.OwnsOne(c => c.Usage, usage =>
             {
                 usage.Property(u => u.MaxRedemptions)
-                    .HasColumnType("INT")
                     .HasColumnName("MaxRedemptions")
                     .IsRequired();
 
                 usage.Property(u => u.RedeemedCount)
-                    .HasColumnType("INT")
                     .HasColumnName("RedeemedCount")
                     .IsRequired();
             });

@@ -26,10 +26,10 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                     Type = table.Column<string>(type: "VARCHAR(20)", nullable: false),
                     Value = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     MaxDiscountAmount = table.Column<decimal>(type: "numeric(18,2)", nullable: true),
-                    MaxRedemptions = table.Column<int>(type: "INT", nullable: false),
-                    RedeemedCount = table.Column<int>(type: "INT", nullable: false),
-                    ValidFrom = table.Column<DateTimeOffset>(type: "DATETIME", nullable: false),
-                    ValidUntil = table.Column<DateTimeOffset>(type: "DATETIME", nullable: false),
+                    MaxRedemptions = table.Column<int>(type: "integer", nullable: false),
+                    RedeemedCount = table.Column<int>(type: "integer", nullable: false),
+                    ValidFrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ValidUntil = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     MinimumOrderAmount = table.Column<decimal>(type: "numeric", nullable: true),
                     MaxRedemptionsPerCustomer = table.Column<int>(type: "integer", nullable: true),
                     Status = table.Column<string>(type: "VARCHAR(20)", nullable: false),
@@ -111,7 +111,7 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CouponRedemption",
+                name: "CouponRedemptions",
                 schema: "coupons",
                 columns: table => new
                 {
@@ -123,9 +123,9 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CouponRedemption", x => x.Id);
+                    table.PrimaryKey("PK_CouponRedemptions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CouponRedemption_Coupons_CouponId",
+                        name: "FK_CouponRedemptions_Coupons_CouponId",
                         column: x => x.CouponId,
                         principalSchema: "coupons",
                         principalTable: "Coupons",
@@ -176,9 +176,9 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CouponRedemption_CouponId",
+                name: "IX_CouponRedemptions_CouponId",
                 schema: "coupons",
-                table: "CouponRedemption",
+                table: "CouponRedemptions",
                 column: "CouponId");
 
             migrationBuilder.CreateIndex(
@@ -221,7 +221,7 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CouponRedemption",
+                name: "CouponRedemptions",
                 schema: "coupons");
 
             migrationBuilder.DropTable(

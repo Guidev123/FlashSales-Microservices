@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Modules.Coupons.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(CouponsDbContext))]
-    [Migration("20260913004627_Initial")]
+    [Migration("20260913012431_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -248,7 +248,7 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
 
                     b.HasIndex("CouponId");
 
-                    b.ToTable("CouponRedemption", "coupons");
+                    b.ToTable("CouponRedemptions", "coupons");
                 });
 
             modelBuilder.Entity("FlashSales.Application.Inbox.InboxMessageConsumer", b =>
@@ -303,11 +303,11 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<int>("MaxRedemptions")
-                                .HasColumnType("INT")
+                                .HasColumnType("integer")
                                 .HasColumnName("MaxRedemptions");
 
                             b1.Property<int>("RedeemedCount")
-                                .HasColumnType("INT")
+                                .HasColumnType("integer")
                                 .HasColumnName("RedeemedCount");
 
                             b1.HasKey("CouponId");
@@ -324,11 +324,11 @@ namespace Modules.Coupons.Infrastructure.Database.Migrations
                                 .HasColumnType("uuid");
 
                             b1.Property<DateTimeOffset>("ValidFrom")
-                                .HasColumnType("DATETIME")
+                                .HasColumnType("timestamp with time zone")
                                 .HasColumnName("ValidFrom");
 
                             b1.Property<DateTimeOffset>("ValidUntil")
-                                .HasColumnType("DATETIME")
+                                .HasColumnType("timestamp with time zone")
                                 .HasColumnName("ValidUntil");
 
                             b1.HasKey("CouponId");
