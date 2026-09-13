@@ -105,5 +105,48 @@ namespace FlashSales.Infrastructure.Database
                     Name = name
                 }, cancellationToken)).WaitAsync(cancellationToken);
         }
+
+        public Task<int> CountPermanentFailuresAsync(CancellationToken cancellationToken)
+        {
+            var sql = $"""
+                SELECT COUNT(*) FROM {schema}."OutboxMessages" WHERE "IsPermanentFailure" = true
+                """;
+
+            return unitOfWork.Connection.ExecuteScalarAsync<int>(
+                unitOfWork.CreateCommand(sql, cancellationToken: cancellationToken)).WaitAsync(cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<OutboxMessage>> GetPermanentFailuresAsync(int limit, CancellationToken cancellationToken)
+        {
+            var sql = $"""
+                SELECT "Id", "CorrelationId", "Type", "Content"::text AS "Content", "OccurredOn",
+                       "ProcessedOn", "Error", "RetryCount", "NextRetryAt", "IsPermanentFailure"
+                FROM {schema}."OutboxMessages"
+                WHERE "IsPermanentFailure" = true
+                ORDER BY "OccurredOn"
+                LIMIT @Limit
+                """;
+
+            var result = await unitOfWork.Connection.QueryAsync<OutboxMessage>(
+                unitOfWork.CreateCommand(sql, new { Limit = limit }, cancellationToken)).WaitAsync(cancellationToken);
+
+            return result.ToList();
+        }
+
+        public Task<int> RequeueAsync(Guid? correlationId, CancellationToken cancellationToken)
+        {
+            var sql = $"""
+                UPDATE {schema}."OutboxMessages"
+                SET "IsPermanentFailure" = false,
+                    "RetryCount"         = 0,
+                    "NextRetryAt"        = NULL,
+                    "Error"              = NULL
+                WHERE "IsPermanentFailure" = true
+                  AND (@CorrelationId IS NULL OR "CorrelationId" = @CorrelationId)
+                """;
+
+            return unitOfWork.Connection.ExecuteAsync(
+                unitOfWork.CreateCommand(sql, new { CorrelationId = correlationId }, cancellationToken)).WaitAsync(cancellationToken);
+        }
     }
 }

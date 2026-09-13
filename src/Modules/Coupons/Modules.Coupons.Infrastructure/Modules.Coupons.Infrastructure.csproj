@@ -8,7 +8,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Infrastructure\FlashSales.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Users\Modules.Users.Contracts\Modules.Users.Contracts.csproj" />
     <ProjectReference Include="..\Modules.Coupons.Application\Modules.Coupons.Application.csproj" />
+    <ProjectReference Include="..\Modules.Coupons.Endpoints\Modules.Coupons.Endpoints.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Modules.Coupons.IntegrationTests" />
   </ItemGroup>
 
 </Project>

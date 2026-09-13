@@ -1,0 +1,56 @@
+{
+  "UserConfig": {
+    "Namespaces": [
+      {
+        "Name": "sbemulatorns",
+        "Topics": [
+          {
+            "Name": "flash-sales.users.seller-activated",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.user-profile-updated",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.seller-profile-picture-updated",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-assigned",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-unassigned",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-granted",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          },
+          {
+            "Name": "flash-sales.users.role-permission-revoked",
+            "Subscriptions": [
+              { "Name": "coupons.sub" }
+            ]
+          }
+        ]
+      }
+    ],
+    "Logging": {
+      "Type": "Console"
+    }
+  }
+}

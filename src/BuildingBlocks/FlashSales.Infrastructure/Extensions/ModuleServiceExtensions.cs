@@ -3,9 +3,12 @@ using FlashSales.Application.Authorization;
 using FlashSales.Application.Bus;
 using FlashSales.Application.Inbox;
 using FlashSales.Application.Outbox;
+using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Database;
 using FlashSales.Infrastructure.Inbox;
+using FlashSales.Infrastructure.Observability;
+using FlashSales.Infrastructure.Observability.HealthChecks;
 using FlashSales.Infrastructure.Outbox;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +23,7 @@ namespace FlashSales.Infrastructure.Extensions
             this IServiceCollection services)
             where TUnitOfWorkImpl : class, IUnitOfWork
         {
-            services.AddScoped<TUnitOfWorkImpl>();
-            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TUnitOfWorkImpl>());
+            services.AddScoped<IUnitOfWork, TUnitOfWorkImpl>();
             return services;
         }
 
@@ -53,6 +55,17 @@ namespace FlashSales.Infrastructure.Extensions
 
             services.AddHostedService(
                 sp => sp.GetRequiredService<ModuleOutboxProcessor<TUnitOfWork>>());
+
+            services.AddHostedService(sp => new OutboxAutoRequeueJob(
+                sp.GetRequiredService<ILogger<OutboxAutoRequeueJob>>(),
+                sp.GetRequiredService<IOptionsMonitor<OutboxOptions>>(),
+                sp,
+                moduleName));
+
+            services.AddHealthChecks()
+                .AddCheck<OutboxHealthCheck>($"{moduleName.ToLower()}-outbox", tags: [HealthChecksExtensions.ReadyTag]);
+
+            services.AddSingleton<IEndpoint>(_ => new OutboxFailuresEndpoint(moduleName));
 
             return services;
         }
@@ -86,6 +99,17 @@ namespace FlashSales.Infrastructure.Extensions
 
             services.AddHostedService(
                 sp => sp.GetRequiredService<ModuleInboxProcessor<TUnitOfWork>>());
+
+            services.AddHostedService(sp => new InboxAutoRequeueJob(
+                sp.GetRequiredService<ILogger<InboxAutoRequeueJob>>(),
+                sp.GetRequiredService<IOptionsMonitor<InboxOptions>>(),
+                sp,
+                moduleName));
+
+            services.AddHealthChecks()
+                .AddCheck<InboxHealthCheck>($"{moduleName.ToLower()}-inbox", tags: [HealthChecksExtensions.ReadyTag]);
+
+            services.AddSingleton<IEndpoint>(_ => new InboxFailuresEndpoint(moduleName));
 
             var subscriptionName = $"{moduleName.ToLower()}.sub";
 

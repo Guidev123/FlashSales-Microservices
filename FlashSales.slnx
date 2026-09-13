@@ -3,6 +3,7 @@
   <Folder Name="/src/Apps/" />
   <Folder Name="/src/Apps/APIs/">
     <Project Path="src/Apps/APIs/FlashSales.Catalog.Api/FlashSales.Catalog.Api.csproj" Id="aec6e250-013b-4cee-ad44-9b7bad71c77e" />
+    <Project Path="src/Apps/APIs/FlashSales.Coupons.Api/FlashSales.Coupons.Api.csproj" Id="316dd98b-eb94-4d18-be5e-3a3bbd5095e0" />
     <Project Path="src/Apps/APIs/FlashSales.Launches.Api/FlashSales.Launches.Api.csproj" Id="d479c383-35e5-4355-bac6-c198df43c539" />
     <Project Path="src/Apps/APIs/FlashSales.Orders.Api/FlashSales.Orders.Api.csproj" Id="9c45b691-adf4-4820-87cd-e73bcb719ff3" />
     <Project Path="src/Apps/APIs/FlashSales.Payments.Api/FlashSales.Payments.Api.csproj" Id="a4752025-dfdc-435b-bd8d-283cf5d54e5d" />
@@ -22,7 +23,7 @@
     <Project Path="src/Modules/Catalog/Modules.Catalog.Endpoints/Modules.Catalog.Endpoints.csproj" />
     <Project Path="src/Modules/Catalog/Modules.Catalog.Infrastructure/Modules.Catalog.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Modules/Coupons/" Id="5546285d-279e-d249-8177-1ad5882ca630">
+  <Folder Name="/src/Modules/Coupons/">
     <Project Path="src/Modules/Coupons/Modules.Coupons.Application/Modules.Coupons.Application.csproj" Id="c42072a4-4666-4097-96f0-ea7654c95626" />
     <Project Path="src/Modules/Coupons/Modules.Coupons.Contracts/Modules.Coupons.Contracts.csproj" Id="7e3b7542-b1fa-4b79-9589-31619d16837b" />
     <Project Path="src/Modules/Coupons/Modules.Coupons.Domain/Modules.Coupons.Domain.csproj" Id="5f154965-caf3-498a-aa85-9a028906855b" />
@@ -61,6 +62,9 @@
   <Folder Name="/tests/Modules/" />
   <Folder Name="/tests/Modules/Catalog/">
     <Project Path="tests/Modules/Catalog/Modules.Catalog.IntegrationTests/Modules.Catalog.IntegrationTests.csproj" Id="89bcbb13-8926-49f8-9d08-90f3da52d763" />
+  </Folder>
+  <Folder Name="/tests/Modules/Coupons/">
+    <Project Path="tests/Modules/Coupons/Modules.Coupons.IntegrationTests/Modules.Coupons.IntegrationTests.csproj" Id="52209cca-f72b-416c-b0f4-c77e74d56974" />
   </Folder>
   <Folder Name="/tests/Modules/Launches/">
     <Project Path="tests/Modules/Launches/Modules.Launches.IntegrationTests/Modules.Launches.IntegrationTests.csproj" Id="45b80365-00ac-4dcb-aba4-903bedaa5a1a" />

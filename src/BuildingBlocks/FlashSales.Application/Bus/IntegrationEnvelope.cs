@@ -29,6 +29,7 @@ namespace FlashSales.Application.Bus
             {
                 MessageId = @event.CorrelationId.ToString(),
                 MessageType = @event.MessageType,
+                Module = ResolveModule(@event),
                 CorrelationId = @event.CorrelationId,
                 Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, JsonSerializerSettingsExtensions.Instance))
             };
@@ -42,9 +43,16 @@ namespace FlashSales.Application.Bus
             {
                 MessageId = messageId,
                 MessageType = @event.MessageType,
+                Module = ResolveModule(@event),
                 CorrelationId = @event.CorrelationId,
                 Body = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(@event, JsonSerializerSettingsExtensions.Instance))
             };
+        }
+
+        private static string ResolveModule(IntegrationEvent @event)
+        {
+            var segments = @event.GetType().Namespace?.Split('.');
+            return segments is ["Modules", var moduleName, ..] ? moduleName : string.Empty;
         }
     }
 }

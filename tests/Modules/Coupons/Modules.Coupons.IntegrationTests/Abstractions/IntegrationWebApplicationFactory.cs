@@ -1,0 +1,126 @@
+using Azure.Messaging.ServiceBus;
+using FlashSales.Application.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Modules.Coupons.Infrastructure.Database;
+using Npgsql;
+using Testcontainers.PostgreSql;
+using Testcontainers.ServiceBus;
+
+namespace Modules.Coupons.IntegrationTests.Abstractions
+{
+    public class IntegrationWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
+    {
+        private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder("postgres:16-alpine")
+            .WithDatabase("flashsales_test")
+            .WithUsername("postgres")
+            .WithPassword("postgres")
+            .Build();
+
+        private readonly ServiceBusContainer _serviceBusContainer = new ServiceBusBuilder("mcr.microsoft.com/azure-messaging/servicebus-emulator:latest")
+            .WithAcceptLicenseAgreement(true)
+            .WithResourceMapping(
+                new FileInfo(Path.Combine(AppContext.BaseDirectory, "Abstractions", "servicebus.config.json")),
+                new FileInfo("/ServiceBus_Emulator/ConfigFiles/Config.json"))
+            .Build();
+
+        internal FakePermissionService PermissionService { get; } = new();
+
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        {
+            builder.UseContentRoot(AppContext.BaseDirectory);
+
+            builder.UseSetting("ConnectionStrings:Postgres", _postgresContainer.GetConnectionString());
+            builder.UseSetting("Authentication:MetadataAddress",
+                "https://test.auth/.well-known/openid-configuration");
+            builder.UseSetting("Authentication:TokenValidationParameters:ValidIssuer",
+                "https://test.auth/realms/flash-sales-dev");
+
+            builder.UseSetting("ApiOptions:UsersApi:Scope", "users.permissions.read");
+
+            builder.ConfigureServices(services =>
+            {
+                RemoveHostedServices(services);
+                ReplaceServiceBusClient(services);
+                ReplacePermissionService(services);
+            });
+        }
+
+        protected override IHost CreateHost(IHostBuilder builder)
+        {
+            builder.UseEnvironment("Testing");
+            return base.CreateHost(builder);
+        }
+
+        public async Task InitializeAsync()
+        {
+            await _serviceBusContainer.StartAsync();
+            await _postgresContainer.StartAsync();
+            await MigrateAsync();
+        }
+
+        public new async Task DisposeAsync()
+        {
+            await _postgresContainer.DisposeAsync();
+            await _serviceBusContainer.DisposeAsync();
+        }
+
+        public async Task ResetDatabaseAsync()
+        {
+            PermissionService.Reset();
+
+            await using var connection = new NpgsqlConnection(_postgresContainer.GetConnectionString());
+            await connection.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand("""
+                DELETE FROM coupons."CouponRedemption";
+                DELETE FROM coupons."Coupons";
+                DELETE FROM coupons."OutboxMessageConsumers";
+                DELETE FROM coupons."OutboxMessages";
+                DELETE FROM coupons."InboxMessageConsumers";
+                DELETE FROM coupons."InboxMessages";
+                """, connection);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public string GetConnectionString() => _postgresContainer.GetConnectionString();
+
+        private static void RemoveHostedServices(IServiceCollection services)
+        {
+            var descriptors = services
+                .Where(d => d.ServiceType == typeof(IHostedService))
+                .ToList();
+
+            foreach (var descriptor in descriptors)
+                services.Remove(descriptor);
+        }
+
+        private void ReplaceServiceBusClient(IServiceCollection services)
+        {
+            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(ServiceBusClient));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddSingleton(new ServiceBusClient(_serviceBusContainer.GetConnectionString()));
+        }
+
+        private void ReplacePermissionService(IServiceCollection services)
+        {
+            var descriptor = services.FirstOrDefault(d => d.ServiceType == typeof(IPermissionService));
+            if (descriptor is not null)
+                services.Remove(descriptor);
+
+            services.AddSingleton<IPermissionService>(PermissionService);
+        }
+
+        private async Task MigrateAsync()
+        {
+            using var scope = Services.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<CouponsDbContext>().Database.MigrateAsync();
+        }
+    }
+}

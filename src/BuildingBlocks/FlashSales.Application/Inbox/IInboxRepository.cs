@@ -13,5 +13,11 @@ namespace FlashSales.Application.Inbox
         Task<bool> IsProcessedAsync(Guid correlationId, string name, CancellationToken cancellationToken);
 
         Task MarkAsProcessedAsync(Guid correlationId, string name, CancellationToken cancellationToken);
+
+        Task<int> CountPermanentFailuresAsync(CancellationToken cancellationToken);
+
+        Task<IReadOnlyList<InboxMessage>> GetPermanentFailuresAsync(int limit, CancellationToken cancellationToken);
+
+        Task<int> RequeueAsync(Guid? correlationId, CancellationToken cancellationToken);
     }
 }

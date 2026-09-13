@@ -98,7 +98,5 @@ namespace Modules.Catalog.Infrastructure
             services.AddEndpoints(typeof(EndpointsModule).Assembly);
             return services;
         }
-
-
     }
 }

@@ -150,7 +150,8 @@
         "launches.read", "launches.write",
         "orders.read", "orders.write",
         "users.read", "users.write",
-        "payments.write"
+        "payments.write",
+        "coupons.write"
       ],
       "optionalClientScopes": ["offline_access", "address", "phone", "microprofile-jwt", "organization"],
       "protocolMappers": [
@@ -273,6 +274,18 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "id": "b2c3d4e5-1000-1000-1000-000000000110",
+          "name": "audience-coupons",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-coupons",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
         }
       ]
     },
@@ -336,6 +349,20 @@
       "id": "b2c3d4e5-2000-2000-2000-000000000005",
       "clientId": "flash-sales-users",
       "name": "Users API",
+      "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false
+    },
+    {
+      "id": "b2c3d4e5-2000-2000-2000-000000000006",
+      "clientId": "flash-sales-coupons",
+      "name": "Coupons API",
       "description": "Resource server only. Every flow is disabled — this client exists so tokens can name it as an audience, never to authenticate as it.",
       "publicClient": true,
       "protocol": "openid-connect",
@@ -487,6 +514,38 @@
       ]
     },
     {
+      "id": "b2c3d4e5-3000-3000-3000-000000000006",
+      "clientId": "flash-sales-coupons-svc",
+      "name": "Coupons service account",
+      "description": "Confidential client used only by the Coupons service (client_credentials) to call other microservices — currently the Users gRPC permissions lookup. Never used by a human.",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "dev-coupons-svc-CHANGE-ME",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
+      "optionalClientScopes": ["users.permissions.read"],
+      "protocolMappers": [
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000106",
+          "name": "audience-users",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
       "id": "b2c3d4e5-3000-3000-3000-000000000002",
       "clientId": "flash-sales-users-admin",
       "name": "Users service — Keycloak admin",
@@ -527,14 +586,17 @@
         "https://localhost:7106/swagger/oauth2-redirect.html",
         "http://localhost:5063/swagger/oauth2-redirect.html",
         "https://localhost:7088/swagger/oauth2-redirect.html",
-        "http://localhost:5051/swagger/oauth2-redirect.html"
+        "http://localhost:5051/swagger/oauth2-redirect.html",
+        "https://localhost:7191/swagger/oauth2-redirect.html",
+        "http://localhost:5243/swagger/oauth2-redirect.html"
       ],
       "webOrigins": [
         "https://localhost:7239", "http://localhost:5062",
         "https://localhost:7172", "http://localhost:5116",
         "https://localhost:7229", "http://localhost:5070",
         "https://localhost:7106", "http://localhost:5063",
-        "https://localhost:7088", "http://localhost:5051"
+        "https://localhost:7088", "http://localhost:5051",
+        "https://localhost:7191", "http://localhost:5243"
       ],
       "defaultClientScopes": [
         "web-origins", "acr", "profile", "roles", "basic", "email",
@@ -601,6 +663,18 @@
           "consentRequired": false,
           "config": {
             "included.client.audience": "flash-sales-users",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-4000-4000-4000-000000000106",
+          "name": "audience-coupons",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-coupons",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
@@ -1409,6 +1483,16 @@
       "id": "c1a2b3c4-1000-1000-1000-000000000009",
       "name": "payments.write",
       "description": "Write access to the Payments API (checkout).",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      }
+    },
+    {
+      "id": "c1a2b3c4-1000-1000-1000-00000000000a",
+      "name": "coupons.write",
+      "description": "Write access to the Coupons API.",
       "protocol": "openid-connect",
       "attributes": {
         "include.in.token.scope": "true",

@@ -373,3 +373,4 @@ FodyWeavers.xsd
 /src/Apps/APIs/FlashSales.Orders.Api/appsettings.Development.json
 /src/Apps/APIs/FlashSales.Launches.Api/appsettings.Development.json
 /src/Apps/APIs/FlashSales.Catalog.Api/appsettings.Development.json
+/src/Apps/APIs/FlashSales.Coupons.Api/appsettings.Development.json

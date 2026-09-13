@@ -119,6 +119,7 @@ Create any further service-to-service scope the same way, named `<service>.<capa
 | `users.read` | Default | Read access to the Users API |
 | `users.write` | Default | Write access to the Users API |
 | `payments.write` | Default | Write access to the Payments API (checkout) |
+| `coupons.write` | Default | Write access to the Coupons API |
 
 These are assigned to `flash-sales-public` in §6, not created there — the client scope itself has no "Type" until it's attached to a client.
 
@@ -152,7 +153,7 @@ Go to **Clients → Create client**.
 
 ### Client Scopes
 
-Go to **Clients → flash-sales-public → Client scopes → Add client scope**, select all nine per-module scopes from §5 (`catalog.read`, `catalog.write`, `launches.read`, `launches.write`, `orders.read`, `orders.write`, `users.read`, `users.write`, `payments.write`), and add them as **Default** — not Optional. Every token issued to the SPA needs to carry these automatically, without the frontend having to request them explicitly.
+Go to **Clients → flash-sales-public → Client scopes → Add client scope**, select all ten per-module scopes from §5 (`catalog.read`, `catalog.write`, `launches.read`, `launches.write`, `orders.read`, `orders.write`, `users.read`, `users.write`, `payments.write`, `coupons.write`), and add them as **Default** — not Optional. Every token issued to the SPA needs to carry these automatically, without the frontend having to request them explicitly.
 
 ### Protocol Mappers
 
@@ -205,8 +206,8 @@ Create one per resource-server client from §7 (create those clients first — t
 | Field | Value (repeat per service) |
 |---|---|
 | Mapper type | Audience |
-| Name | `audience-catalog`, `audience-launches`, `audience-orders`, `audience-payments`, `audience-users` |
-| Included Client Audience | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` (matching the name) |
+| Name | `audience-catalog`, `audience-launches`, `audience-orders`, `audience-payments`, `audience-users`, `audience-coupons` |
+| Included Client Audience | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`, `flash-sales-coupons` (matching the name) |
 | Add to ID token | OFF |
 | Add to access token | ON |
 
@@ -214,13 +215,13 @@ Create one per resource-server client from §7 (create those clients first — t
 
 ## 7. Clients: Resource Servers
 
-Create one client per service: `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`.
+Create one client per service: `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`, `flash-sales-coupons`.
 
 ### General Settings
 | Field | Value |
 |---|---|
 | Client type | OpenID Connect |
-| Client ID | `flash-sales-catalog` *(repeat for the other four)* |
+| Client ID | `flash-sales-catalog` *(repeat for the other five)* |
 
 ### Capability Config
 | Field | Value |
@@ -419,7 +420,53 @@ ClientCredentials__ClientSecret=<secret>
 
 ---
 
-## 12. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
+## 12. Client: `flash-sales-coupons-svc` (Coupons service account)
+
+### General Settings
+| Field | Value |
+|---|---|
+| Client type | OpenID Connect |
+| Client ID | `flash-sales-coupons-svc` |
+
+### Capability Config
+| Field | Value |
+|---|---|
+| Client authentication | ON (confidential client) |
+| Standard flow | OFF |
+| Direct access grants | OFF |
+| Service accounts roles | ON |
+
+### Client Scopes
+
+Go to **Clients → flash-sales-coupons-svc → Client scopes → Add client scope**, select `users.permissions.read` (§5), and add it as **Optional**.
+
+### Protocol Mappers
+
+Go to **Clients → flash-sales-coupons-svc → Client scopes → flash-sales-coupons-svc-dedicated → Add mapper → By configuration**.
+
+| Field | Value |
+|---|---|
+| Mapper type | Audience |
+| Name | `audience-users` |
+| Included Client Audience | `flash-sales-users` |
+| Add to ID token | OFF |
+| Add to access token | ON |
+
+This is required, not optional — without it the token this client gets from `client_credentials` won't carry `flash-sales-users` as audience, and the Users gRPC service will reject it at authentication.
+
+### Credentials
+
+Go to **Clients → flash-sales-coupons-svc → Credentials**, copy the **Client secret**, and set it in the Coupons service's configuration:
+
+```
+ClientCredentials__Authority=http://localhost:8080/realms/flash-sales-dev
+ClientCredentials__ClientId=flash-sales-coupons-svc
+ClientCredentials__ClientSecret=<secret>
+```
+
+---
+
+## 13. Client: `flash-sales-users-admin` (Users service — Keycloak admin)
 
 ### General Settings
 | Field | Value |
@@ -457,7 +504,7 @@ KeyCloak__CurrentRealm=flash-sales-dev
 
 ---
 
-## 13. Client: `flash-sales-swagger` (Swagger UI)
+## 14. Client: `flash-sales-swagger` (Swagger UI)
 
 Lets you click "Authorize" inside each service's own `/swagger` page and log in interactively (Authorization Code + PKCE). Separate from `flash-sales-public` (§6), which is the SPA's client — Swagger's OAuth2 redirect always lands back on that *service's own* origin, never on the SPA's.
 
@@ -482,12 +529,12 @@ One redirect URI per service, both ports (`https` dev-cert port and plain `http`
 
 | Field | Value |
 |---|---|
-| Valid redirect URIs | `https://localhost:7239/swagger/oauth2-redirect.html`, `http://localhost:5062/swagger/oauth2-redirect.html` (Catalog) · `https://localhost:7172/swagger/oauth2-redirect.html`, `http://localhost:5116/swagger/oauth2-redirect.html` (Launches) · `https://localhost:7229/swagger/oauth2-redirect.html`, `http://localhost:5070/swagger/oauth2-redirect.html` (Orders) · `https://localhost:7106/swagger/oauth2-redirect.html`, `http://localhost:5063/swagger/oauth2-redirect.html` (Payments) · `https://localhost:7088/swagger/oauth2-redirect.html`, `http://localhost:5051/swagger/oauth2-redirect.html` (Users) |
-| Web origins | the ten origins above, without the path |
+| Valid redirect URIs | `https://localhost:7239/swagger/oauth2-redirect.html`, `http://localhost:5062/swagger/oauth2-redirect.html` (Catalog) · `https://localhost:7172/swagger/oauth2-redirect.html`, `http://localhost:5116/swagger/oauth2-redirect.html` (Launches) · `https://localhost:7229/swagger/oauth2-redirect.html`, `http://localhost:5070/swagger/oauth2-redirect.html` (Orders) · `https://localhost:7106/swagger/oauth2-redirect.html`, `http://localhost:5063/swagger/oauth2-redirect.html` (Payments) · `https://localhost:7088/swagger/oauth2-redirect.html`, `http://localhost:5051/swagger/oauth2-redirect.html` (Users) · `https://localhost:7191/swagger/oauth2-redirect.html`, `http://localhost:5243/swagger/oauth2-redirect.html` (Coupons) |
+| Web origins | the twelve origins above, without the path |
 
 ### Client Scopes
 
-Go to **Clients → flash-sales-swagger → Client scopes → Add client scope**, select the eight non-Payments per-module scopes from §5 (`catalog.read`, `catalog.write`, `launches.read`, `launches.write`, `orders.read`, `orders.write`, `users.read`, `users.write`), and add them as **Default**. Without these, every `RequireScope(...)`-protected endpoint (nearly all of them — see each module's `*Scopes.cs`) 403s for a token minted through Swagger, even with a valid, authenticated, activated user. Note this client does **not** carry `payments.write` — only `flash-sales-public` does — so a Swagger-issued token still can't call `CheckoutPaymentEndpoint`; add it here too if you need to exercise checkout from Swagger.
+Go to **Clients → flash-sales-swagger → Client scopes → Add client scope**, select the eight non-Payments, non-Coupons per-module scopes from §5 (`catalog.read`, `catalog.write`, `launches.read`, `launches.write`, `orders.read`, `orders.write`, `users.read`, `users.write`), and add them as **Default**. Without these, every `RequireScope(...)`-protected endpoint (nearly all of them — see each module's `*Scopes.cs`) 403s for a token minted through Swagger, even with a valid, authenticated, activated user. Note this client does **not** carry `payments.write` or `coupons.write` — only `flash-sales-public` does — so a Swagger-issued token still can't call `CheckoutPaymentEndpoint` or `CreateCouponEndpoint`; add the relevant scope here too if you need to exercise checkout or coupon creation from Swagger.
 
 ### Protocol Mappers
 
@@ -496,12 +543,12 @@ Same audience mappers as `flash-sales-public` (§6) — go to **Clients → flas
 | Field | Value (repeat per service) |
 |---|---|
 | Mapper type | Audience |
-| Name | `audience-catalog`, `audience-launches`, `audience-orders`, `audience-payments`, `audience-users` |
-| Included Client Audience | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` (matching the name) |
+| Name | `audience-catalog`, `audience-launches`, `audience-orders`, `audience-payments`, `audience-users`, `audience-coupons` |
+| Included Client Audience | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`, `flash-sales-coupons` (matching the name) |
 | Add to ID token | OFF |
 | Add to access token | ON |
 
-All five are required — whichever service's Swagger you're testing against validates the token's `aud` claim against that service's own name, so the same client needs to be able to mint a token that satisfies any of them.
+All six are required — whichever service's Swagger you're testing against validates the token's `aud` claim against that service's own name, so the same client needs to be able to mint a token that satisfies any of them.
 
 ### Configuration
 
@@ -513,7 +560,7 @@ Swagger__ClientId=flash-sales-swagger
 
 ---
 
-## 14. Identity Providers
+## 15. Identity Providers
 
 ### GitHub
 
@@ -551,7 +598,7 @@ http://localhost:8080/realms/flash-sales-dev/broker/google/endpoint
 
 ---
 
-## 15. First Broker Login Flow (Account Linking)
+## 16. First Broker Login Flow (Account Linking)
 
 Verify under **Authentication → first broker login** that the authenticators are configured as follows:
 
@@ -566,14 +613,14 @@ Verify under **Authentication → first broker login** that the authenticators a
 
 ---
 
-## 16. Theme
+## 17. Theme
 
 1. Mount `docker/keycloak/themes/flash-sales` into the Keycloak container.
 2. Go to **Realm Settings → Themes → Login theme** and select `flash-sales`.
 
 ---
 
-## 17. Summary
+## 18. Summary
 
 | Component | Value |
 |---|---|
@@ -581,13 +628,13 @@ Verify under **Authentication → first broker login** that the authenticators a
 | User registration | OFF |
 | Duplicate emails | OFF |
 | User client | `flash-sales-public` |
-| Resource-server clients | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users` |
-| Service clients | `flash-sales-orders-svc` (holds `launches.stock.write` + `users.permissions.read`, audience mapped to `flash-sales-launches` and `flash-sales-users`), `flash-sales-catalog-svc` / `flash-sales-launches-svc` / `flash-sales-payments-svc` (each holds `users.permissions.read`, audience mapped to `flash-sales-users`) |
+| Resource-server clients | `flash-sales-catalog`, `flash-sales-launches`, `flash-sales-orders`, `flash-sales-payments`, `flash-sales-users`, `flash-sales-coupons` |
+| Service clients | `flash-sales-orders-svc` (holds `launches.stock.write` + `users.permissions.read`, audience mapped to `flash-sales-launches` and `flash-sales-users`), `flash-sales-catalog-svc` / `flash-sales-launches-svc` / `flash-sales-payments-svc` / `flash-sales-coupons-svc` (each holds `users.permissions.read`, audience mapped to `flash-sales-users`) |
 | Admin client | `flash-sales-users-admin` — holds `manage-users`/`view-users`/`view-realm` |
-| Swagger client | `flash-sales-swagger` — public, PKCE, one redirect URI per service's own `/swagger/oauth2-redirect.html`, audience-mapped to all five resource-server clients, the eight `catalog.*`/`launches.*`/`orders.*`/`users.*` default scopes (not `payments.write` — that's `flash-sales-public`-only) |
+| Swagger client | `flash-sales-swagger` — public, PKCE, one redirect URI per service's own `/swagger/oauth2-redirect.html`, audience-mapped to all six resource-server clients, the eight `catalog.*`/`launches.*`/`orders.*`/`users.*` default scopes (not `payments.write` or `coupons.write` — those are `flash-sales-public`-only) |
 | Role `activated` | Realm role, checked on every request |
 | Roles `customer` / `seller` | Used only by `flash-sales-public` mappers |
 | Scope `launches.stock.write` | Optional, granted only to `flash-sales-orders-svc` |
-| Scope `users.permissions.read` | Optional, granted to `flash-sales-orders-svc`, `flash-sales-catalog-svc`, `flash-sales-launches-svc`, `flash-sales-payments-svc` — every service that needs to resolve a caller's permissions |
-| Scopes `catalog.*`/`launches.*`/`orders.*`/`users.*` (`.read`/`.write`) and `payments.write` | Default on `flash-sales-public` — every user token carries them |
+| Scope `users.permissions.read` | Optional, granted to `flash-sales-orders-svc`, `flash-sales-catalog-svc`, `flash-sales-launches-svc`, `flash-sales-payments-svc`, `flash-sales-coupons-svc` — every service that needs to resolve a caller's permissions |
+| Scopes `catalog.*`/`launches.*`/`orders.*`/`users.*` (`.read`/`.write`), `payments.write` and `coupons.write` | Default on `flash-sales-public` — every user token carries them |
 | Identity Providers | GitHub + Google with First Broker Login flow |
