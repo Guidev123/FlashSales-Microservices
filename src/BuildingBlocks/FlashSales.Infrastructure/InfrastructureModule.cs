@@ -26,10 +26,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using MidR.Core;
 using MidR.DependencyInjection;
 using Serilog;
 using StackExchange.Redis;
 using System.Reflection;
+using System.Threading.Channels;
 
 namespace FlashSales.Infrastructure
 {
@@ -59,7 +61,8 @@ namespace FlashSales.Infrastructure
             var assembliesArray = assemblies.ToArray();
 
             services
-                .AddMidR(args: assembliesArray).WithBehaviors(cfg =>
+                .AddMidR(assembliesArray)
+                .WithBehaviors(cfg =>
                     {
                         cfg.AddBehavior(typeof(RequestLoggingBehavior<,>)).WithPriority(1);
                         cfg.AddBehavior(typeof(RequestValidationBehavior<,>)).WithPriority(2);
@@ -68,6 +71,7 @@ namespace FlashSales.Infrastructure
                         cfg.AddBehavior(typeof(OutboxIdempotencyBehavior<>)).WithPriority(2);
                         cfg.AddBehavior(typeof(InboxIdempotencyBehavior<>)).WithPriority(3);
                     });
+
             services.AddSingleton(TimeProvider.System);
             services.AddScoped<IDomainEventCollector, DomainEventCollector>();
             services.AddScoped<DomainEventsInterceptor>();
