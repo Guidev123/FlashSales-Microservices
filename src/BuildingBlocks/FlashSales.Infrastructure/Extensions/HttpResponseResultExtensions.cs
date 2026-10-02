@@ -40,7 +40,19 @@ namespace FlashSales.Infrastructure.Extensions
                 return Result.Failure<TValue>(error);
             }
 
-            var value = await response.Content.ReadFromJsonAsync<TValue>(cancellationToken: ct);
+            TValue? value;
+
+            try
+            {
+                value = await response.Content.ReadFromJsonAsync<TValue>(cancellationToken: ct);
+            }
+            catch
+            {
+                return Result.Failure<TValue>(Error.Problem(
+                    "Http.DeserializationFailed",
+                    $"Failed to deserialize the response obtained from the service {response.RequestMessage?.RequestUri}"
+                    ));
+            }
 
             return value is not null
                 ? Result.Success(value)
