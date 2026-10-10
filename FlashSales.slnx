@@ -59,23 +59,31 @@
     <Project Path="src/Modules/Users/Modules.Users.Infrastructure/Modules.Users.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/" />
-  <Folder Name="/tests/Modules/" />
+  <Folder Name="/tests/Modules/">
+    <Project Path="tests/Modules/Modules.ArchitectureTests/Modules.ArchitectureTests.csproj" />
+  </Folder>
   <Folder Name="/tests/Modules/Catalog/">
     <Project Path="tests/Modules/Catalog/Modules.Catalog.IntegrationTests/Modules.Catalog.IntegrationTests.csproj" Id="89bcbb13-8926-49f8-9d08-90f3da52d763" />
+    <Project Path="tests/Modules/Catalog/Modules.Catalog.ArchitectureTests/Modules.Catalog.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Coupons/">
     <Project Path="tests/Modules/Coupons/Modules.Coupons.IntegrationTests/Modules.Coupons.IntegrationTests.csproj" Id="52209cca-f72b-416c-b0f4-c77e74d56974" />
+    <Project Path="tests/Modules/Coupons/Modules.Coupons.ArchitectureTests/Modules.Coupons.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Launches/">
     <Project Path="tests/Modules/Launches/Modules.Launches.IntegrationTests/Modules.Launches.IntegrationTests.csproj" Id="45b80365-00ac-4dcb-aba4-903bedaa5a1a" />
+    <Project Path="tests/Modules/Launches/Modules.Launches.ArchitectureTests/Modules.Launches.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Orders/">
     <Project Path="tests/Modules/Orders/Modules.Orders.IntegrationTests/Modules.Orders.IntegrationTests.csproj" Id="c3d4e5f6-a7b8-4c9d-8e0f-1a2b3c4d5e6f" />
+    <Project Path="tests/Modules/Orders/Modules.Orders.ArchitectureTests/Modules.Orders.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Payments/">
     <Project Path="tests/Modules/Payments/Modules.Payments.IntegrationTests/Modules.Payments.IntegrationTests.csproj" Id="d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f7a" />
+    <Project Path="tests/Modules/Payments/Modules.Payments.ArchitectureTests/Modules.Payments.ArchitectureTests.csproj" />
   </Folder>
   <Folder Name="/tests/Modules/Users/">
     <Project Path="tests/Modules/Users/Modules.Users.IntegrationTests/Modules.Users.IntegrationTests.csproj" Id="d5ddb762-6cd8-4de7-8c3c-48ccdcc8c212" />
+    <Project Path="tests/Modules/Users/Modules.Users.ArchitectureTests/Modules.Users.ArchitectureTests.csproj" />
   </Folder>
 </Solution>

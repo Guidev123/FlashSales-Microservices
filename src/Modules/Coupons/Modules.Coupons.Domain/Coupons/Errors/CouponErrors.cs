@@ -122,5 +122,13 @@ namespace Modules.Coupons.Domain.Coupons.Errors
         public static readonly Error InvalidDiscountParameters = Error.Invalid(
             "Coupons.InvalidDiscountParameters",
             "Invalid discount parameters. Please check the discount type and values.");
+
+        public static readonly Error SomethingHasFailedToRedeemCoupon = Error.Problem(
+            "Coupons.SomethingHasFailedToRedeemCoupon",
+            "Something has failed to redeem the coupon. Please try again later.");
+
+        public static readonly Error InsufficientRedemptionsAvailable = Error.Problem(
+            "Coupons.InsufficientRedemptionsAvailable",
+            "There are not enough redemptions available for this coupon.");
     }
 }

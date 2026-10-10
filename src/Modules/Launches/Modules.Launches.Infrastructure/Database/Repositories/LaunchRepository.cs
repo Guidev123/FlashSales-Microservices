@@ -14,12 +14,16 @@ namespace Modules.Launches.Infrastructure.Database.Repositories
 
         public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken)
         {
-            return context.Launches.AnyAsync(l => l.Id == id, cancellationToken);
+            return context
+                .Launches
+                .AsNoTracking()
+                .AnyAsync(l => l.Id == id, cancellationToken);
         }
 
         public Task<Launch?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return context.Launches
+                .AsNoTrackingWithIdentityResolution()
                 .Include(l => l.StockReservations)
                 .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
         }
@@ -40,6 +44,7 @@ namespace Modules.Launches.Infrastructure.Database.Repositories
         {
             var now = DateTimeOffset.UtcNow;
             return await context.Launches
+                .AsNoTracking()
                 .Where(l => l.Status == LaunchStatus.Scheduled && l.Schedule!.StartAt <= now)
                 .Select(l => l.Id)
                 .ToListAsync(cancellationToken);
@@ -49,6 +54,7 @@ namespace Modules.Launches.Infrastructure.Database.Repositories
         {
             var now = DateTimeOffset.UtcNow;
             return await context.Launches
+                .AsNoTracking()
                 .Where(l => l.Status == LaunchStatus.Active && l.Schedule!.EndAt <= now)
                 .Select(l => l.Id)
                 .ToListAsync(cancellationToken);
