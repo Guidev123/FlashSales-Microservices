@@ -31,6 +31,14 @@ namespace Modules.Coupons.Domain.Coupons.Entities
             MinimumOrderAmount = minimumOrderAmount;
             MaxRedemptionsPerCustomer = maxRedemptionsPerCustomer;
             Status = CouponStatus.Draft;
+
+            _statusMethods = new Dictionary<CouponStatus, Func<Result>>
+            {
+                { CouponStatus.Draft, Activate },
+                { CouponStatus.Active, Pause },
+                { CouponStatus.Paused, Activate }
+            };
+
             Validate();
         }
 
@@ -152,6 +160,16 @@ namespace Modules.Coupons.Domain.Coupons.Entities
             return Result.Success();
         }
 
+        public Result UpdateStatus(CouponStatus status)
+        {
+            if (!_statusMethods.TryGetValue(status, out var func))
+            {
+                return Result.Failure(CouponErrors.InvalidStatus);
+            }
+
+            return func();
+        }
+
         public Result Activate()
         {
             if (Status != CouponStatus.Draft && Status != CouponStatus.Paused)
@@ -207,6 +225,8 @@ namespace Modules.Coupons.Domain.Coupons.Entities
 
             return Result.Success();
         }
+
+        private readonly Dictionary<CouponStatus, Func<Result>> _statusMethods = [];
 
         protected override void Validate()
         {

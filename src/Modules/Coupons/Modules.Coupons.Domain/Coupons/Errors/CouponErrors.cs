@@ -15,6 +15,10 @@ namespace Modules.Coupons.Domain.Coupons.Errors
                 "Coupons.InvalidStatusTransition",
                 $"Cannot transition from '{current}' to '{attempted}'");
 
+        public static readonly Error InvalidStatus = Error.Problem(
+            "Coupons.InvalidStatus",
+            "Invalid status transition");
+
         public static readonly Error LaunchIdRequired = Error.Invalid(
             "Coupons.LaunchIdRequired",
             "Launch id must not be empty");

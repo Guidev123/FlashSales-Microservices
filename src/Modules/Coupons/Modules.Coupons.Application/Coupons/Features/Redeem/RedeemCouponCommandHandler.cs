@@ -20,7 +20,7 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
                 var coupon = await couponRepository.GetByIdAsync(request.CouponId, cancellationToken);
                 if (coupon is null)
                 {
-                    return Result.Failure(CouponErrors.NotFound(request.CouponId));
+                    return Result.Success();
                 }
 
                 var couponRedemptionResult = coupon.Redeem(
