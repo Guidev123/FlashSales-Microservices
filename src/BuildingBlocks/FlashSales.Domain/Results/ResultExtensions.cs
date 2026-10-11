@@ -261,5 +261,26 @@
             var result = await resultTask;
             return await func(result);
         }
+
+        public static async Task<Result<TOut>> Bind<TOut>(
+            this Task<Result> resultTask,
+            Func<Task<Result<TOut>>> func)
+        {
+            var result = await resultTask;
+            return result.IsFailure
+                ? Result.Failure<TOut>(result.Error!)
+                : await func();
+        }
+
+        public static async Task<Result<T>> TapError<T>(
+            this Task<Result<T>> resultTask,
+            Func<Error, Task> func)
+        {
+            var result = await resultTask;
+            if (result.IsFailure)
+                await func(result.Error!);
+
+            return result;
+        }
     }
 }

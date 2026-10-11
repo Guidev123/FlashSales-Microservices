@@ -37,31 +37,15 @@ namespace Modules.Orders.Application.Orders.Sagas
                 ["Quantity"] = order.Quantity
             });
 
-            var sagaResult = await CreateOrder(order, cancellationToken);
-            if (sagaResult.IsFailure)
-            {
-                return Result.Failure<string>(sagaResult.Error!);
-            }
-
-            var saga = sagaResult.Value;
-
-            var reserveResult = await ReserveAsync(order, saga, cancellationToken);
-            if (reserveResult.IsFailure)
-            {
-                return Result.Failure<string>(reserveResult.Error!);
-            }
-
-            var checkoutResult = await CheckoutAsync(
-                order,
-                saga,
-                customerEmail,
-                items,
-                cancellationToken
-                );
-
-            await CompleteAsync(order, saga, cancellationToken);
-
-            return checkoutResult.Value;
+            return await CreateOrder(order, cancellationToken)
+                .Bind(saga => ReserveAsync(order, saga, cancellationToken)
+                    .Bind(() => CheckoutAsync(order, customerEmail, items, cancellationToken)
+                        .TapError(error => CompensateAsync(
+                            saga,
+                            order,
+                            $"Failed to start checkout: {error.Description}",
+                            cancellationToken)))
+                    .Tap(_ => CompleteAsync(order, saga, cancellationToken)));
         }
 
         public async Task<Result> CompensateAsync(Guid sagaId, string reason, CancellationToken cancellationToken)
@@ -166,29 +150,17 @@ namespace Modules.Orders.Application.Orders.Sagas
 
         private async Task<Result<string>> CheckoutAsync(
             Order order,
-            OrderCreationSaga saga,
             string customerEmail,
             IReadOnlyCollection<CheckoutLineItem> items,
-            CancellationToken cancellationToken
-            )
+            CancellationToken cancellationToken)
         {
-            var checkoutResult = await paymentsPublicApi.InitiateCheckoutAsync(PaymentMappers.MapToRequest(
-                                order.Id,
-                                order.OrderCode,
-                                order.TotalAmount,
-                                order.CustomerId,
-                                customerEmail,
-                                items),
-                                cancellationToken);
+            var result = await paymentsPublicApi.InitiateCheckoutAsync(
+                PaymentMappers.MapToRequest(
+                    order.Id, order.OrderCode, order.TotalAmount,
+                    order.CustomerId, customerEmail, items),
+                cancellationToken);
 
-            if (checkoutResult.IsFailure)
-            {
-                await CompensateAsync(saga, order, $"Failed to start checkout: {checkoutResult.Error!.Description}", cancellationToken);
-
-                return Result.Failure<string>(checkoutResult.Error!);
-            }
-
-            return Result.Success(checkoutResult.Value.CheckoutUrl);
+            return result.Map(checkout => checkout.CheckoutUrl);
         }
 
         private async Task ApplyCouponAsync(
