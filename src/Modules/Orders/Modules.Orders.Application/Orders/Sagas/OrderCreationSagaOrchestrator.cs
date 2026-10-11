@@ -1,5 +1,8 @@
 using FlashSales.Application.Abstractions;
+using FlashSales.Application.FeatureFlags;
 using FlashSales.Domain.Results;
+using Microsoft.Extensions.Logging;
+using Modules.Coupons.Contracts;
 using Modules.Launches.Contracts;
 using Modules.Orders.Application.Orders.Mappers;
 using Modules.Orders.Domain.Orders.Entities;
@@ -11,83 +14,54 @@ using Modules.Payments.Contracts;
 namespace Modules.Orders.Application.Orders.Sagas
 {
     public sealed class OrderCreationSagaOrchestrator(
+        ILogger<OrderCreationSaga> logger,
         IOrderRepository orderRepository,
         IOrderCreationSagaRepository sagaRepository,
         IUnitOfWork unitOfWork,
         ILaunchesPublicApi launchesPublicApi,
-        IPaymentsPublicApi paymentsPublicApi
+        IPaymentsPublicApi paymentsPublicApi,
+        ICouponsPublicApi couponPublicApi,
+        IFeatureFlagService featureFlagService
         )
     {
         public async Task<Result<string>> StartAsync(
             Order order,
-            Guid customerId,
             string customerEmail,
             IReadOnlyCollection<CheckoutLineItem> items,
             CancellationToken cancellationToken)
         {
-            var saga = OrderCreationSaga.Create(order.Id);
-
-            try
+            using var scope = logger.BeginScope(new Dictionary<string, object>()
             {
-                await orderRepository.StartStreamAsync(order, cancellationToken);
-            }
-            catch (ActiveOrderAlreadyExistsException ex)
-            {
-                return Result.Failure<string>(OrderErrors.ActiveOrderAlreadyExists(ex.LaunchId));
-            }
+                ["CustomerEmail"] = customerEmail,
+                ["CustomerId"] = order.CustomerId,
+                ["Quantity"] = order.Quantity
+            });
 
-            sagaRepository.Add(saga);
-
-            var createResult = await unitOfWork.SaveChangesAsync(cancellationToken);
-            if (createResult.IsFailure)
+            var sagaResult = await CreateOrder(order, cancellationToken);
+            if (sagaResult.IsFailure)
             {
-                return Result.Failure<string>(OrderErrors.ReservationFailed);
+                return Result.Failure<string>(sagaResult.Error!);
             }
 
-            var reserveResult = await launchesPublicApi.ReserveAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
+            var saga = sagaResult.Value;
+
+            var reserveResult = await ReserveAsync(order, saga, cancellationToken);
             if (reserveResult.IsFailure)
             {
-                saga.Fail($"Failed to reserve stock: {reserveResult.Error!.Description}");
-                order.Cancel(saga.LastError!);
-                sagaRepository.Update(saga);
-                await orderRepository.AppendAsync(order, cancellationToken);
-                await unitOfWork.SaveChangesAsync(cancellationToken);
-
                 return Result.Failure<string>(reserveResult.Error!);
             }
 
-            saga.MarkStockReserved();
-            sagaRepository.Update(saga);
-
-            var checkpointResult = await unitOfWork.SaveChangesAsync(cancellationToken);
-            if (checkpointResult.IsFailure)
-            {
-                return Result.Failure<string>(OrderErrors.ReservationFailed);
-            }
-
-            var checkoutResult = await paymentsPublicApi.InitiateCheckoutAsync(PaymentMappers.MapToRequest(
-                order.Id,
-                order.OrderCode,
-                order.TotalAmount,
-                customerId,
+            var checkoutResult = await CheckoutAsync(
+                order,
+                saga,
                 customerEmail,
-                items),
-                cancellationToken);
+                items,
+                cancellationToken
+                );
 
-            if (checkoutResult.IsFailure)
-            {
-                await CompensateAsync(saga, order, $"Failed to start checkout: {checkoutResult.Error!.Description}", cancellationToken);
+            await CompleteAsync(order, saga, cancellationToken);
 
-                return Result.Failure<string>(checkoutResult.Error!);
-            }
-
-            saga.MarkCompleted();
-            order.MarkPaymentProcessing();
-            sagaRepository.Update(saga);
-            await orderRepository.AppendAsync(order, cancellationToken);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-
-            return checkoutResult.Value.CheckoutUrl;
+            return checkoutResult.Value;
         }
 
         public async Task<Result> CompensateAsync(Guid sagaId, string reason, CancellationToken cancellationToken)
@@ -128,6 +102,120 @@ namespace Modules.Orders.Application.Orders.Sagas
 
             order.Cancel(reason);
 
+            sagaRepository.Update(saga);
+            await orderRepository.AppendAsync(order, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        private async Task<Result<OrderCreationSaga>> CreateOrder(
+            Order order,
+            CancellationToken cancellationToken
+            )
+        {
+            var saga = OrderCreationSaga.Create(order.Id);
+
+            try
+            {
+                await orderRepository.StartStreamAsync(order, cancellationToken);
+            }
+            catch (ActiveOrderAlreadyExistsException ex)
+            {
+                return Result.Failure<OrderCreationSaga>(OrderErrors.ActiveOrderAlreadyExists(ex.LaunchId));
+            }
+
+            sagaRepository.Add(saga);
+
+            var createResult = await unitOfWork.SaveChangesAsync(cancellationToken);
+            if (createResult.IsFailure)
+            {
+                return Result.Failure<OrderCreationSaga>(OrderErrors.ReservationFailed);
+            }
+
+            return saga;
+        }
+
+        private async Task<Result> ReserveAsync(
+            Order order,
+            OrderCreationSaga saga,
+            CancellationToken cancellationToken
+            )
+        {
+            var reserveResult = await launchesPublicApi.ReserveAsync(new(order.LaunchId, order.Quantity, order.Id), cancellationToken);
+            if (reserveResult.IsFailure)
+            {
+                saga.Fail($"Failed to reserve stock: {reserveResult.Error!.Description}");
+                order.Cancel(saga.LastError!);
+                sagaRepository.Update(saga);
+                await orderRepository.AppendAsync(order, cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                return Result.Failure(reserveResult.Error!);
+            }
+
+            saga.MarkStockReserved();
+            sagaRepository.Update(saga);
+
+            var checkpointResult = await unitOfWork.SaveChangesAsync(cancellationToken);
+            if (checkpointResult.IsFailure)
+            {
+                return Result.Failure(OrderErrors.ReservationFailed);
+            }
+
+            return Result.Success();
+        }
+
+        private async Task<Result<string>> CheckoutAsync(
+            Order order,
+            OrderCreationSaga saga,
+            string customerEmail,
+            IReadOnlyCollection<CheckoutLineItem> items,
+            CancellationToken cancellationToken
+            )
+        {
+            var checkoutResult = await paymentsPublicApi.InitiateCheckoutAsync(PaymentMappers.MapToRequest(
+                                order.Id,
+                                order.OrderCode,
+                                order.TotalAmount,
+                                order.CustomerId,
+                                customerEmail,
+                                items),
+                                cancellationToken);
+
+            if (checkoutResult.IsFailure)
+            {
+                await CompensateAsync(saga, order, $"Failed to start checkout: {checkoutResult.Error!.Description}", cancellationToken);
+
+                return Result.Failure<string>(checkoutResult.Error!);
+            }
+
+            return Result.Success(checkoutResult.Value.CheckoutUrl);
+        }
+
+        private async Task ApplyCouponAsync(
+            Order order,
+            OrderCreationSaga saga,
+            CancellationToken cancellationToken
+            )
+        {
+            var canApply = await CanApplyCouponAsync(cancellationToken);
+            if (!canApply)
+            {
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("The discount coupon feature is disabled for the customer {CustomerId}", order.CustomerId);
+                }
+            }
+        }
+
+        private Task<bool> CanApplyCouponAsync(CancellationToken cancellationToken)
+        {
+            return featureFlagService.IsEnabledAsync("Coupons", cancellationToken);
+        }
+
+        private async Task CompleteAsync(Order order, OrderCreationSaga saga, CancellationToken cancellationToken)
+        {
+            saga.MarkCompleted();
+            order.MarkPaymentProcessing();
             sagaRepository.Update(saga);
             await orderRepository.AppendAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);

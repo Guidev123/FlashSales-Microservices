@@ -32,7 +32,7 @@ namespace FlashSales.Infrastructure.FeatureFlags
             }
             catch (OperationCanceledException)
             {
-                throw;
+                return false;
             }
             catch (Exception ex)
             {

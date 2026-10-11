@@ -1,4 +1,5 @@
 using FlashSales.Infrastructure;
+using FlashSales.Infrastructure.FeatureFlags;
 using FlashSales.Infrastructure.KeyVault;
 using FlashSales.Infrastructure.Observability;
 using Modules.Orders.Infrastructure;
@@ -17,6 +18,8 @@ try
     builder.AddKeyVaultSecrets();
 
     builder.AddObservabilityLogging(ServiceName);
+
+    builder.AddFeatureFlags();
 
     builder.Services
         .AddCoreInfrastructure(builder.Configuration, OrdersModule.Assemblies)

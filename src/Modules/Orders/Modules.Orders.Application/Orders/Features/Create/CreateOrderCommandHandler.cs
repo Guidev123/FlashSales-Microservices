@@ -56,7 +56,6 @@ namespace Modules.Orders.Application.Orders.Features.Create
 
             var result = await orchestrator.StartAsync(
                 order,
-                request.CustomerId,
                 request.CustomerEmail,
                 [new CheckoutLineItem(launch.Title, request.Quantity, launch.DiscountedPrice)],
                 cancellationToken);

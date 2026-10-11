@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Application\FlashSales.Application.csproj" />
+    <ProjectReference Include="..\..\Coupons\Modules.Coupons.Contracts\Modules.Coupons.Contracts.csproj" />
     <ProjectReference Include="..\Modules.Orders.Domain\Modules.Orders.Domain.csproj" />
     <ProjectReference Include="..\Modules.Orders.Contracts\Modules.Orders.Contracts.csproj" />
     <ProjectReference Include="..\..\Launches\Modules.Launches.Contracts\Modules.Launches.Contracts.csproj" />
