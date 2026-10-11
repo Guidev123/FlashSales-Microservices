@@ -14,6 +14,7 @@ Flash Sales is a microservices platform for running high-demand, time-boxed prod
 - **Stripe payment gateway** integration behind a swappable abstraction.
 - **Feature flags and dynamic configuration** via Azure App Configuration.
 - **Clickstream analytics pipeline**: a dedicated service collector ingests front-end interaction events, streams them through Kafka, and lands them in a Data Lake for product analytics.
+- **Seller analytics**: a dedicated service consumes launch analytics events from Kafka and writes purpose-built views into **Cassandra**, so sellers can see how their launches are performing without touching the transactional databases.
 - **Secrets in Azure Key Vault** — no connection strings or client secrets sitting in plaintext configuration.
 - **Full distributed tracing and structured logging** via OpenTelemetry and Serilog, exported to Jaeger and Seq, correlated across HTTP and background-job execution alike.
 - **gRPC** for synchronous cross-service calls, with the standard gRPC Health Checking Protocol exposed alongside REST health checks.
@@ -24,7 +25,7 @@ Flash Sales is a microservices platform for running high-demand, time-boxed prod
 
 ![Flash Sales Architecture](docs/images/flash-sales-architecture.webp)
 
-A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of seven bounded-context services (six in .NET, plus the Go-based Waiting Room) and the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Each service owns its own database, and the shared infrastructure around the cluster — Redis for caching, Azure App Configuration for flags and config — is opted into per service. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), and the Catalog is additionally projected into **Elasticsearch** to power full-text product search: a **Debezium** connector captures changes from the Catalog database, streams them through **Kafka**, and keeps the search index up to date, exactly as drawn in the diagram.
+A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of eight bounded-context services (seven in .NET, plus the Go-based Waiting Room) and the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Each service owns its own database — PostgreSQL for most, with MongoDB alongside it for Orders' read model and Cassandra for seller analytics — and the shared infrastructure around the cluster — Redis for caching, Azure App Configuration for flags and config — is opted into per service. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), and the Catalog is additionally projected into **Elasticsearch** to power full-text product search: a **Debezium** connector captures changes from the Catalog database, streams them through **Kafka**, and keeps the search index up to date, exactly as drawn in the diagram.
 ## Bounded Contexts
 
 | Service | Responsibility | Persistence | Notable role |
@@ -34,9 +35,10 @@ A front-end authenticates against **Keycloak** via Authorization Code Flow with 
 | `flash-sales.orders` | Order creation, confirmation, cancellation, refund | Marten event stream (write) + MongoDB projections (read) | Orchestrates the order-creation saga across Launches and Payments |
 | `flash-sales.payments` | Payment checkout, reconciliation | PostgreSQL | Integrates with Stripe as the payment gateway |
 | `flash-sales.coupons` | Discount coupons: creation, activation/pause/cancel, redemption and release | PostgreSQL (write) + Dapper (read) | Redeem/release are saga steps called by Orders over gRPC; rollout gated by the `Coupons` feature flag |
-| `flash-sales.waiting-room` | Virtual waiting room and fair admission to a launch | Own database (`WaitingRoomDb`) | Written in **Go**; the only non-.NET service on the platform |
+| `flash-sales.waiting-room` | Virtual waiting room and fair admission to a launch | PostgreSQL (`WaitingRoomDb`) | Written in **Go**; the only non-.NET service on the platform |
 | `flash-sales.users` | Identity, permissions, seller onboarding | PostgreSQL (write) + Dapper (read) | Hosts the gRPC permissions server every other service consumes; owns Keycloak admin integration |
 | `flash-sales.service-collector` | Clickstream / interaction event ingestion | Kafka → Data Lake | Decoupled from the transactional path entirely; feeds product analytics |
+| `flash-sales.seller-analytics` | Seller-facing analytics views over their launches | Cassandra (`SellerAnalyticsDb`) | Consumes launch analytics events from Kafka; its API serves the views sellers see |
 
 All the .NET services sit on a shared `FlashSales.Infrastructure` / `FlashSales.Application` / `FlashSales.Endpoints` building-blocks layer, plus per-module `Domain` / `Application` / `Infrastructure` / `Endpoints` / `Contracts` projects that keep each context's public contract isolated from its internals. The Go Waiting Room shares none of that code by design — it integrates only through the same contracts every other service sees: Keycloak-issued JWTs, the API Gateway, and Azure Service Bus integration events.
 
@@ -84,6 +86,10 @@ Connection strings, client secrets, and API keys are never held in plaintext con
 
 The `flash-sales.service-collector` service is intentionally decoupled from the transactional path: it ingests front-end click and interaction events, publishes them onto **Kafka**, and Kafka feeds a **Data Lake** for downstream product analytics. Nothing about checkout, stock, or payments depends on this pipeline being healthy — analytics failure never becomes a sales-path incident.
 
+## Seller Analytics — Kafka, Cassandra
+
+`flash-sales.seller-analytics` turns the same analytics event stream into something sellers can act on. It consumes launch-related analytics events from **Kafka** — the same topic that feeds the Data Lake, as an independent consumer — and writes them into **Cassandra**, where the data is modeled query-first around the views defined for sellers: how each of their launches is performing over time. Cassandra fits the shape of the workload — a continuous, high-volume stream of append-only events read back by a small set of known access patterns — and keeps that read load entirely off the transactional databases. Like the collector, it sits outside the sales path: if it falls behind or goes down, checkout, stock and payments are unaffected, and it catches up from Kafka when it returns.
+
 ## Catalog Full-Text Search — Debezium, Kafka, Elasticsearch
 
 The Catalog supports **full-text search** over products, so shoppers can find items by name, description and other text fields with relevance ranking, instead of the exact-match filtering a relational query gives you. Queries are served by **Elasticsearch**, not PostgreSQL. The index is fed without the Catalog service dual-writing to a second store: a **Debezium** connector watches the Catalog database through change data capture and publishes row changes onto **Kafka**, and a consumer indexes them into Elasticsearch. Search stays eventually consistent with the source of truth, and an Elasticsearch outage never touches the write path — products can still be created and updated while search catches up.
@@ -100,7 +106,7 @@ Health checks are granular and per-service by design: each service exposes a liv
 
 ## Storage
 
-PostgreSQL is scoped one schema per module, written through EF Core and read through Dapper riding the same connection EF Core already opened — no second connection pool, no drift between the write and read paths for the modules that stay relational. Redis backs cross-module permission caching as a shared, opt-in building block. Azure Blob Storage holds product images and seller profile pictures. Orders is the exception by design: its write model lives in Marten's event store and its read model in MongoDB, per the [Event Sourcing & CQRS](#event-sourcing--cqrs-orders) section above.
+PostgreSQL is scoped one schema per module, written through EF Core and read through Dapper riding the same connection EF Core already opened — no second connection pool, no drift between the write and read paths for the modules that stay relational. Redis backs cross-module permission caching as a shared, opt-in building block. Azure Blob Storage holds product images and seller profile pictures. Two services are exceptions by design: Orders keeps its write model in Marten's event store and its read model in MongoDB, per the [Event Sourcing & CQRS](#event-sourcing--cqrs-orders) section above, and Seller Analytics stores its query-first views in Cassandra, per the [Seller Analytics](#seller-analytics--kafka-cassandra) section.
 
 ## Composable Infrastructure Building Blocks
 
@@ -124,8 +130,9 @@ The full local dependency stack is defined in [`docker/docker-compose.yml`](dock
 | `azurite` | Local Azure Blob Storage emulator |
 | `servicebus-emulator` (+ `servicebus-mssql`) | Local Azure Service Bus emulator |
 | `app-configuration` | Azure App Configuration emulator — feature flags and dynamic config |
-| `kafka` | Event streaming backbone for the service collector and Debezium CDC for the Catalog search index |
+| `kafka` | Event streaming backbone for the service collector, seller analytics and Debezium CDC for the Catalog search index |
 | `mongodb` | Orders CQRS read projections |
+| `cassandra` | Seller analytics views |
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
@@ -139,7 +146,7 @@ Then run any service from `src/Apps/APIs/FlashSales.<Name>.Api` — each is a st
 |---|---|
 | Runtime | .NET 10, ASP.NET Core Minimal APIs; Go (Waiting Room) |
 | Write-model persistence | Entity Framework Core (Npgsql), Marten (event sourcing — Orders) |
-| Read-model persistence | Dapper, MongoDB (Orders projections) |
+| Read-model persistence | Dapper, MongoDB (Orders projections), Cassandra (seller analytics views) |
 | Mediator / pipeline | MidR (commands, queries, notifications, pipeline behaviors) |
 | Validation | FluentValidation |
 | Messaging | Azure Service Bus, Kafka |
