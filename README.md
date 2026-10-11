@@ -7,34 +7,38 @@ Flash Sales is a microservices platform for running high-demand, time-boxed prod
 - **Keycloak-backed identity**, with permission-based authorization resolved over gRPC and cached in Redis, plus two distinct OAuth2 flows (client-credentials and On-Behalf-Of token exchange) chosen per call.
 - **Event-sourced `Order` aggregate** on Marten, with CQRS read projections materialized into MongoDB — the write model is an immutable event stream, the read model is purpose-built for queries.
 - **Transactional Outbox and Inbox** in every module, backed by Azure Service Bus, with idempotency baked into the mediator pipeline instead of hand-rolled per handler.
-- **Orchestrated saga** driving order creation across Launches and Payments, with explicit compensation and two independent sweep jobs as a safety net.
+- **Orchestrated saga** driving order creation across Launches, Payments and Coupons, with explicit compensation and two independent sweep jobs as a safety net.
+- **Discount Coupons** as their own bounded context (percentage and fixed discounts, usage limits, validity windows), redeemed and released as a saga step and rolled out behind a feature flag.
+- **Full-text product search** in the Catalog, powered by Elasticsearch and fed by Debezium change data capture over Kafka — no dual writes from the service.
+- **Polyglot services**: the Waiting Room is written in **Go**, sitting beside the .NET services behind the same gateway, identity provider and messaging backbone.
 - **Stripe payment gateway** integration behind a swappable abstraction.
 - **Feature flags and dynamic configuration** via Azure App Configuration.
 - **Clickstream analytics pipeline**: a dedicated service collector ingests front-end interaction events, streams them through Kafka, and lands them in a Data Lake for product analytics.
 - **Secrets in Azure Key Vault** — no connection strings or client secrets sitting in plaintext configuration.
 - **Full distributed tracing and structured logging** via OpenTelemetry and Serilog, exported to Jaeger and Seq, correlated across HTTP and background-job execution alike.
 - **gRPC** for synchronous cross-service calls, with the standard gRPC Health Checking Protocol exposed alongside REST health checks.
-- **API Gateway** fronting all five services, with a Kubernetes deployment topology behind it.
+- **API Gateway** fronting all the transactional services, with a Kubernetes deployment topology behind it.
 - **Composable, per-service infrastructure**: no service inherits infrastructure it doesn't use — every cross-cutting concern (cache, blob storage, messaging, health checks) is opted into explicitly, module by module.
 
 ## Architecture
 
-![Flash Sales Architecture](docs/images/flash-sales-architecture.png)
+![Flash Sales Architecture](docs/images/flash-sales-architecture.webp)
 
-A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of five bounded-context services plus the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), exactly as drawn in the diagram.
-
+A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of seven bounded-context services (six in .NET, plus the Go-based Waiting Room) and the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Each service owns its own database, and the shared infrastructure around the cluster — Redis for caching, Azure App Configuration for flags and config — is opted into per service. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), and the Catalog is additionally projected into **Elasticsearch** to power full-text product search: a **Debezium** connector captures changes from the Catalog database, streams them through **Kafka**, and keeps the search index up to date, exactly as drawn in the diagram.
 ## Bounded Contexts
 
 | Service | Responsibility | Persistence | Notable role |
 |---|---|---|---|
-| `flash-sales.catalog` | Products, sellers, product images | PostgreSQL (write) + Dapper (read) | Public API consumed by other modules; owns product images in Blob Storage |
+| `flash-sales.catalog` | Products, sellers, product images, full-text product search | PostgreSQL (write) + Dapper (read) + Elasticsearch (search) | Public API consumed by other modules; owns product images in Blob Storage; search served from an Elasticsearch index kept in sync via CDC |
 | `flash-sales.launches` | Launch lifecycle, stock reservation/release | PostgreSQL (write) + Dapper (read) | Scheduled jobs activate and end launches automatically |
 | `flash-sales.orders` | Order creation, confirmation, cancellation, refund | Marten event stream (write) + MongoDB projections (read) | Orchestrates the order-creation saga across Launches and Payments |
 | `flash-sales.payments` | Payment checkout, reconciliation | PostgreSQL | Integrates with Stripe as the payment gateway |
+| `flash-sales.coupons` | Discount coupons: creation, activation/pause/cancel, redemption and release | PostgreSQL (write) + Dapper (read) | Redeem/release are saga steps called by Orders over gRPC; rollout gated by the `Coupons` feature flag |
+| `flash-sales.waiting-room` | Virtual waiting room and fair admission to a launch | Own database (`WaitingRoomDb`) | Written in **Go**; the only non-.NET service on the platform |
 | `flash-sales.users` | Identity, permissions, seller onboarding | PostgreSQL (write) + Dapper (read) | Hosts the gRPC permissions server every other service consumes; owns Keycloak admin integration |
 | `flash-sales.service-collector` | Clickstream / interaction event ingestion | Kafka → Data Lake | Decoupled from the transactional path entirely; feeds product analytics |
 
-All six sit on a shared `FlashSales.Infrastructure` / `FlashSales.Application` / `FlashSales.Endpoints` building-blocks layer, plus per-module `Domain` / `Application` / `Infrastructure` / `Endpoints` / `Contracts` projects that keep each context's public contract isolated from its internals.
+All the .NET services sit on a shared `FlashSales.Infrastructure` / `FlashSales.Application` / `FlashSales.Endpoints` building-blocks layer, plus per-module `Domain` / `Application` / `Infrastructure` / `Endpoints` / `Contracts` projects that keep each context's public contract isolated from its internals. The Go Waiting Room shares none of that code by design — it integrates only through the same contracts every other service sees: Keycloak-issued JWTs, the API Gateway, and Azure Service Bus integration events.
 
 ## Identity & Authorization
 
@@ -54,7 +58,15 @@ Every module implements the transactional **Outbox pattern**: domain events rais
 
 ## Orchestrated Saga
 
-Order creation is coordinated by an explicit **orchestrated saga**, not a choreography of independent event handlers reacting blindly to each other: reserve stock in Launches, checkout in Payments, then confirm the order — with **compensating actions** (stock release, order cancellation) triggered automatically on any step's failure. Two independent sweep jobs act as a safety net on top of the saga's own bookkeeping: one reconciles sagas that go stale mid-flight, the other expires orders whose payment window has lapsed regardless of what state the saga thinks it's in.
+Order creation is coordinated by an explicit **orchestrated saga**, not a choreography of independent event handlers reacting blindly to each other: reserve stock in Launches, redeem the discount coupon in Coupons (when the `Coupons` feature flag is enabled for the customer), checkout in Payments, then confirm the order — with **compensating actions** (stock release, coupon release, order cancellation) triggered automatically on any step's failure. Two independent sweep jobs act as a safety net on top of the saga's own bookkeeping: one reconciles sagas that go stale mid-flight, the other expires orders whose payment window has lapsed regardless of what state the saga thinks it's in.
+
+## Coupons
+
+Discount coupons live in their own bounded context rather than inside Orders. A coupon is either a **percentage** or a **fixed-amount** discount, carries a validity window and a usage limit, and moves through an explicit lifecycle (`Draft → Active → Paused / Expired / Canceled / Exhausted`), with each transition raised as a domain event. Redemptions are recorded per coupon so usage limits hold under concurrent buyers, and a release use case gives a coupon back when a later saga step fails. Orders consumes this synchronously over **gRPC**, mirroring the reserve/compensate shape already used for stock, and rollout is controlled by the `Coupons` flag in Azure App Configuration so the feature can be enabled for some customers and not others.
+
+## Waiting Room (Go)
+
+`flash-sales.waiting-room` is the platform's fairness layer for high-demand launches, and the one service written in **Go** — a deliberate polyglot choice for a latency-sensitive, highly concurrent workload that has to absorb the burst of buyers hitting a launch at the same instant. Customers who join within the initial window are admitted in **randomized order** rather than raw arrival order, so people with a faster network path to the server don't get a structural advantage; the service also owns the queue behind payment, so that when a payment window expires the reservation can pass to the next customer in line. It has its own `WaitingRoomDb`, validates the same Keycloak JWTs as every .NET service, and communicates with the rest of the platform through Azure Service Bus integration events.
 
 ## Payment Gateway
 
@@ -71,6 +83,10 @@ Connection strings, client secrets, and API keys are never held in plaintext con
 ## Analytics Pipeline
 
 The `flash-sales.service-collector` service is intentionally decoupled from the transactional path: it ingests front-end click and interaction events, publishes them onto **Kafka**, and Kafka feeds a **Data Lake** for downstream product analytics. Nothing about checkout, stock, or payments depends on this pipeline being healthy — analytics failure never becomes a sales-path incident.
+
+## Catalog Full-Text Search — Debezium, Kafka, Elasticsearch
+
+The Catalog supports **full-text search** over products, so shoppers can find items by name, description and other text fields with relevance ranking, instead of the exact-match filtering a relational query gives you. Queries are served by **Elasticsearch**, not PostgreSQL. The index is fed without the Catalog service dual-writing to a second store: a **Debezium** connector watches the Catalog database through change data capture and publishes row changes onto **Kafka**, and a consumer indexes them into Elasticsearch. Search stays eventually consistent with the source of truth, and an Elasticsearch outage never touches the write path — products can still be created and updated while search catches up.
 
 ## Observability — Tracing, Logging, Health Checks
 
@@ -92,7 +108,7 @@ A deliberate departure from the assumption — valid in the original modular mon
 
 ## API Gateway & Deployment
 
-A single **API Gateway** fronts all five services, terminating TLS and doing coarse-grained routing while leaving fine-grained authorization to each service — the gateway is a routing and edge concern, not a second authorization layer, so no service trusts a request just because it arrived through the gateway. The platform runs on **Kubernetes**, one deployment per bounded-context service plus the service collector, matching the cluster topology in the architecture diagram above.
+A single **API Gateway** fronts the bounded-context services, terminating TLS and doing coarse-grained routing while leaving fine-grained authorization to each service — the gateway is a routing and edge concern, not a second authorization layer, so no service trusts a request just because it arrived through the gateway. The platform runs on **Kubernetes**, one deployment per bounded-context service plus the service collector, matching the cluster topology in the architecture diagram above.
 
 ## Local Development
 
@@ -108,7 +124,7 @@ The full local dependency stack is defined in [`docker/docker-compose.yml`](dock
 | `azurite` | Local Azure Blob Storage emulator |
 | `servicebus-emulator` (+ `servicebus-mssql`) | Local Azure Service Bus emulator |
 | `app-configuration` | Azure App Configuration emulator — feature flags and dynamic config |
-| `kafka` | Event streaming backbone for the service collector |
+| `kafka` | Event streaming backbone for the service collector and Debezium CDC for the Catalog search index |
 | `mongodb` | Orders CQRS read projections |
 
 ```bash
@@ -121,12 +137,13 @@ Then run any service from `src/Apps/APIs/FlashSales.<Name>.Api` — each is a st
 
 | Concern | Technology |
 |---|---|
-| Runtime | .NET 10, ASP.NET Core Minimal APIs |
+| Runtime | .NET 10, ASP.NET Core Minimal APIs; Go (Waiting Room) |
 | Write-model persistence | Entity Framework Core (Npgsql), Marten (event sourcing — Orders) |
 | Read-model persistence | Dapper, MongoDB (Orders projections) |
 | Mediator / pipeline | MidR (commands, queries, notifications, pipeline behaviors) |
 | Validation | FluentValidation |
 | Messaging | Azure Service Bus, Kafka |
+| Change data capture / full-text search | Debezium, Elasticsearch |
 | Cache | Redis (StackExchange.Redis) |
 | Identity | Keycloak (OIDC, JWT Bearer) |
 | Inter-service RPC | gRPC (`Grpc.AspNetCore`) |
