@@ -13,6 +13,7 @@ using FlashSales.Infrastructure.Authentication;
 using FlashSales.Infrastructure.Authorization;
 using FlashSales.Infrastructure.Bus;
 using FlashSales.Infrastructure.Cache;
+using FlashSales.Infrastructure.Extensions;
 using FlashSales.Infrastructure.Interceptors;
 using FlashSales.Infrastructure.Middlewares;
 using FlashSales.Infrastructure.Observability;
@@ -83,12 +84,6 @@ namespace FlashSales.Infrastructure
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            services.Configure<ServiceBusOptions>(configuration.GetSection(ServiceBusOptions.SectionName));
-
-            var section = configuration.GetSection("ServiceBus");
-            var fullyQualifiedNamespace = section["FullyQualifiedNamespace"];
-            var connectionString = section["ConnectionString"];
-
             var clientOptions = new ServiceBusClientOptions
             {
                 TransportType = ServiceBusTransportType.AmqpTcp,
@@ -103,15 +98,18 @@ namespace FlashSales.Infrastructure
 
             services.AddSingleton(_ =>
             {
-                if (!string.IsNullOrWhiteSpace(fullyQualifiedNamespace))
-                    return new ServiceBusClient(fullyQualifiedNamespace, new DefaultAzureCredential(), clientOptions);
+                var connectionString = configuration.GetConnectionString("ServiceBus");
 
-                if (!string.IsNullOrWhiteSpace(connectionString))
-                    return new ServiceBusClient(connectionString, clientOptions);
+                if (string.IsNullOrWhiteSpace(connectionString))
+                    throw new InvalidOperationException("Connection string 'ServiceBus' is not configured.");
 
-                throw new InvalidOperationException(
-                    "Configure 'ServiceBus:FullyQualifiedNamespace' (Managed Identity) " +
-                    "or 'ServiceBus:ConnectionString' (dev local) on appsettings.json.");
+                var parsed = AzureConnectionString.Parse(connectionString);
+
+                // Only "Endpoint=sb://<namespace>.servicebus.windows.net/" (no key): Managed Identity / Entra ID.
+                if (!parsed.HasCredentials("SharedAccessKey", "SharedAccessSignature"))
+                    return new ServiceBusClient(parsed.Endpoint.Host, new DefaultAzureCredential(), clientOptions);
+
+                return new ServiceBusClient(connectionString, clientOptions);
             });
 
             services.AddSingleton<IEventBus, AzureServiceBus>();
@@ -149,9 +147,10 @@ namespace FlashSales.Infrastructure
             services.AddSingleton<IBlobStorageService, BlobStorageService>();
             services.AddSingleton((sp) =>
             {
-                var blobOptions = sp.GetRequiredService<IOptions<BlobStorageOptions>>();
+                var connectionString = configuration.GetConnectionString("BlobStorage")
+                    ?? throw new InvalidOperationException("Connection string 'BlobStorage' is not configured.");
 
-                return new BlobServiceClient(blobOptions.Value.ConnectionString);
+                return new BlobServiceClient(connectionString);
             });
 
             return services;

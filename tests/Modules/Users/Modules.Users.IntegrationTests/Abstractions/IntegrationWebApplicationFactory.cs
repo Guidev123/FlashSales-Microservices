@@ -65,7 +65,7 @@ namespace Modules.Users.IntegrationTests.Abstractions
             string realmUrl = $"{keycloakAddress}realms/{RealmName}";
 
             builder.UseSetting("ConnectionStrings:Postgres", _postgresContainer.GetConnectionString());
-            builder.UseSetting("BlobStorage:ConnectionString", _azuriteContainer.GetConnectionString());
+            builder.UseSetting("ConnectionStrings:BlobStorage", _azuriteContainer.GetConnectionString());
             builder.UseSetting("Authentication:MetadataAddress", $"{realmUrl}/.well-known/openid-configuration");
             builder.UseSetting("Authentication:TokenValidationParameters:ValidIssuer", realmUrl);
 

@@ -1,4 +1,5 @@
 using FlashSales.Infrastructure;
+using FlashSales.Infrastructure.KeyVault;
 using FlashSales.Infrastructure.Observability;
 using Modules.Launches.Infrastructure;
 using Serilog;
@@ -12,6 +13,8 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    builder.AddKeyVaultSecrets();
 
     builder.AddObservabilityLogging(ServiceName);
 

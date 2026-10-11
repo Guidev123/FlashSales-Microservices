@@ -185,7 +185,11 @@ services:
     container_name: app-configuration
     environment:
       "Tenant:AnonymousAuthEnabled": "true"
+      "Tenant:HmacSha256Enabled": "true"
       "Authentication:Anonymous:AnonymousUserRole": "Owner"
+      "Tenant:AccessKeys:0:Name": "emulator"
+      "Tenant:AccessKeys:0:Id": "emulator"
+      "Tenant:AccessKeys:0:Secret": "Zmxhc2hzYWxlcy1hcHAtY29uZmlndXJhdGlvbi1lbXVsYXRvcg=="
     ports:
       - "8483:8483"
     networks:
