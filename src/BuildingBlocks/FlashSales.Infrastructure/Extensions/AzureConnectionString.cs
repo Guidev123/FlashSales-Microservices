@@ -1,9 +1,5 @@
 namespace FlashSales.Infrastructure.Extensions
 {
-    /// <summary>
-    /// Azure-style connection string (<c>Key=Value;Key=Value</c>). One without credentials, only
-    /// <c>Endpoint=...</c>, means the resource authenticates with Entra ID instead of a key.
-    /// </summary>
     internal sealed class AzureConnectionString
     {
         private readonly Dictionary<string, string> _parts;

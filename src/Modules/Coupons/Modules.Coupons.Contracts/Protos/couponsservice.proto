@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option csharp_namespace = "Modules.Coupons.Contracts.Grpc";
+
+package flashsales.coupons.v1;
+
+service CouponsService {
+  rpc Redeem (RedeemCouponRequest) returns (RedeemCouponReply);
+  rpc Release (ReleaseCouponRequest) returns (ReleaseCouponReply);
+}
+
+message RedeemCouponRequest {
+  string order_id = 1;
+  string customer_id = 2;
+  string coupon_id = 3;
+  int64 order_amount_cents = 4;
+}
+
+message RedeemCouponReply {}
+
+message ReleaseCouponRequest { string coupon_id = 1; string order_id = 2; }
+
+message ReleaseCouponReply {}

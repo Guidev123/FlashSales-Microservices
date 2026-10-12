@@ -73,6 +73,8 @@ namespace Modules.Orders.IntegrationTests.Abstractions
 
             builder.UseSetting("ApiOptions:LaunchesApi:BaseUrl", _wireMock.Url);
             builder.UseSetting("ApiOptions:LaunchesApi:Scope", "launches.stock.write");
+            builder.UseSetting("ApiOptions:CouponsApi:BaseUrl", _wireMock.Url);
+            builder.UseSetting("ApiOptions:CouponsApi:Scope", "coupons.write");
             builder.UseSetting("ApiOptions:PaymentsApi:BaseUrl", _wireMock.Url);
             builder.UseSetting("ApiOptions:PaymentsApi:Scope", "");
             builder.UseSetting("ApiOptions:PaymentsApi:Audience", "flash-sales-payments");

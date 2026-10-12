@@ -63,6 +63,7 @@ namespace Modules.Coupons.Infrastructure
 
         private static IServiceCollection AddEndpoints(this IServiceCollection services)
         {
+            services.AddGrpc();
             services.AddEndpoints(typeof(EndpointsModule).Assembly);
             return services;
         }

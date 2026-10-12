@@ -389,7 +389,7 @@
       "serviceAccountsEnabled": true,
       "authorizationServicesEnabled": false,
       "defaultClientScopes": ["web-origins", "acr", "profile", "roles", "basic", "email", "service_account"],
-      "optionalClientScopes": ["launches.stock.write", "users.permissions.read"],
+      "optionalClientScopes": ["launches.stock.write", "users.permissions.read", "coupons.write"],
       "protocolMappers": [
         {
           "id": "b2c3d4e5-3000-3000-3000-000000000101",
@@ -399,6 +399,18 @@
           "consentRequired": false,
           "config": {
             "included.client.audience": "flash-sales-launches",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "id": "b2c3d4e5-3000-3000-3000-000000000107",
+          "name": "audience-coupons",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "flash-sales-coupons",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }

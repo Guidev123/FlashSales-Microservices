@@ -32,6 +32,14 @@ namespace FlashSales.Infrastructure.Extensions
                         $"{operationName}.AlreadyExists",
                         $"The resource for {operationName} already exists.")),
 
+                    StatusCode.InvalidArgument => Result.Failure<T>(Error.Invalid(
+                        ex.Trailers.GetValue(GrpcMetadataKeys.ErrorCode) ?? $"{operationName}.InvalidArgument",
+                        ex.Status.Detail)),
+
+                    StatusCode.FailedPrecondition => Result.Failure<T>(Error.Problem(
+                        ex.Trailers.GetValue(GrpcMetadataKeys.ErrorCode) ?? $"{operationName}.FailedPrecondition",
+                        ex.Status.Detail)),
+
                     _ => Result.Failure<T>(Error.Problem(
                         $"{operationName}.UnknownError",
                         $"An unknown error occurred while performing {operationName}: {ex.Message}"))

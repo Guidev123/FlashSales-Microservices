@@ -1,7 +1,6 @@
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using Azure.Storage.Blobs;
-using FlashSales.Application.Abstractions;
 using FlashSales.Application.Behaviors;
 using FlashSales.Application.Bus;
 using FlashSales.Application.Cache;
@@ -26,13 +25,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-using MidR.Core;
 using MidR.DependencyInjection;
 using Serilog;
 using StackExchange.Redis;
 using System.Reflection;
-using System.Threading.Channels;
 
 namespace FlashSales.Infrastructure
 {
@@ -105,7 +101,6 @@ namespace FlashSales.Infrastructure
 
                 var parsed = AzureConnectionString.Parse(connectionString);
 
-                // Only "Endpoint=sb://<namespace>.servicebus.windows.net/" (no key): Managed Identity / Entra ID.
                 if (!parsed.HasCredentials("SharedAccessKey", "SharedAccessSignature"))
                     return new ServiceBusClient(parsed.Endpoint.Host, new DefaultAzureCredential(), clientOptions);
 

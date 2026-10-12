@@ -1,4 +1,4 @@
-﻿using FlashSales.Infrastructure.Http;
+using FlashSales.Infrastructure.Http;
 
 namespace Modules.Orders.Infrastructure.Options
 {
@@ -8,5 +8,6 @@ namespace Modules.Orders.Infrastructure.Options
 
         public HttpOptions LaunchesApi { get; set; } = null!;
         public HttpOptions PaymentsApi { get; set; } = null!;
+        public HttpOptions CouponsApi { get; set; } = null!;
     }
 }

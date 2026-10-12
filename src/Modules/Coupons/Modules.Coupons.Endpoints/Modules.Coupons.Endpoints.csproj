@@ -10,6 +10,7 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Endpoints\FlashSales.Endpoints.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\FlashSales.Infrastructure\FlashSales.Infrastructure.csproj" />
     <ProjectReference Include="..\Modules.Coupons.Application\Modules.Coupons.Application.csproj" />
+    <ProjectReference Include="..\Modules.Coupons.Contracts\Modules.Coupons.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

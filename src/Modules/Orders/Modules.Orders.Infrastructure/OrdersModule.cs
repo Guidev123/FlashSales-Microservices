@@ -13,6 +13,8 @@ using Marten;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Modules.Coupons.Contracts;
+using Modules.Coupons.Contracts.Grpc;
 using Modules.Launches.Contracts;
 using Modules.Orders.Application.Orders.Sagas;
 using Modules.Orders.Application.Orders.Services;
@@ -138,6 +140,8 @@ namespace Modules.Orders.Infrastructure
 
             services.AddCustomHttpClientWithClientCredentialsAuth<ILaunchesPublicApi, LaunchesApiService>(configuration, options.LaunchesApi);
             services.AddCustomHttpClientWithOnBehalfOfAuth<IPaymentsPublicApi, PaymentsApiService>(configuration, options.PaymentsApi);
+            services.AddCustomGrpcClientWithClientCredentialsAuth<CouponsService.CouponsServiceClient>(configuration, options.CouponsApi);
+            services.AddScoped<ICouponsPublicApi, CouponsApiService>();
 
             return services;
         }
