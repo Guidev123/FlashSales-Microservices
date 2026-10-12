@@ -10,7 +10,6 @@ Flash Sales is a microservices platform for running high-demand, time-boxed prod
 - **Orchestrated saga** driving order creation across Launches, Payments and Coupons, with explicit compensation and two independent sweep jobs as a safety net.
 - **Discount Coupons** as their own bounded context (percentage and fixed discounts, usage limits, validity windows), redeemed and released as a saga step and rolled out behind a feature flag.
 - **Full-text product search** in the Catalog, powered by Elasticsearch and fed by Debezium change data capture over Kafka — no dual writes from the service.
-- **Polyglot services**: the Waiting Room is written in **Go**, sitting beside the .NET services behind the same gateway, identity provider and messaging backbone.
 - **Stripe payment gateway** integration behind a swappable abstraction.
 - **Feature flags and dynamic configuration** via Azure App Configuration.
 - **Clickstream analytics pipeline**: a dedicated service collector ingests front-end interaction events, streams them through Kafka, and lands them in a Data Lake for product analytics.
@@ -25,7 +24,7 @@ Flash Sales is a microservices platform for running high-demand, time-boxed prod
 
 ![Flash Sales Architecture](docs/images/flash-sales-architecture.webp)
 
-A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of eight bounded-context services (seven in .NET, plus the Go-based Waiting Room) and the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Each service owns its own database — PostgreSQL for most, with MongoDB alongside it for Orders' read model and Cassandra for seller analytics — and the shared infrastructure around the cluster — Redis for caching, Azure App Configuration for flags and config — is opted into per service. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), and the Catalog is additionally projected into **Elasticsearch** to power full-text product search: a **Debezium** connector captures changes from the Catalog database, streams them through **Kafka**, and keeps the search index up to date, exactly as drawn in the diagram.
+A front-end authenticates against **Keycloak** via Authorization Code Flow with PKCE, then talks to the platform through an **API Gateway**, which routes to a Kubernetes-hosted cluster of eight bounded-context services and the analytics service collector. Every request carries a Keycloak-issued JWT, validated independently by the service handling it — the gateway routes, it does not authorize. Services communicate synchronously over **gRPC** and resilient HTTP, and asynchronously over **Azure Service Bus** through a per-module Outbox/Inbox pipeline. Each service owns its own database — PostgreSQL for most, with MongoDB alongside it for Orders' read model and Cassandra for seller analytics — and the shared infrastructure around the cluster — Redis for caching, Azure App Configuration for flags and config — is opted into per service. Orders' data is split across a write model (the Marten event stream) and a read model (MongoDB projections), and the Catalog is additionally projected into **Elasticsearch** to power full-text product search: a **Debezium** connector captures changes from the Catalog database, streams them through **Kafka**, and keeps the search index up to date, exactly as drawn in the diagram.
 ## Bounded Contexts
 
 | Service | Responsibility | Persistence | Notable role |
@@ -35,12 +34,12 @@ A front-end authenticates against **Keycloak** via Authorization Code Flow with 
 | `flash-sales.orders` | Order creation, confirmation, cancellation, refund | Marten event stream (write) + MongoDB projections (read) | Orchestrates the order-creation saga across Launches and Payments |
 | `flash-sales.payments` | Payment checkout, reconciliation | PostgreSQL | Integrates with Stripe as the payment gateway |
 | `flash-sales.coupons` | Discount coupons: creation, activation/pause/cancel, redemption and release | PostgreSQL (write) + Dapper (read) | Redeem/release are saga steps called by Orders over gRPC; rollout gated by the `Coupons` feature flag |
-| `flash-sales.waiting-room` | Virtual waiting room and fair admission to a launch | PostgreSQL (`WaitingRoomDb`) | Written in **Go**; the only non-.NET service on the platform |
+| `flash-sales.waiting-room` | Virtual waiting room and fair admission to a launch | PostgreSQL (`WaitingRoomDb`) | Randomized fair admission to launches; payment-window queue that passes the reservation to the next customer in line |
 | `flash-sales.users` | Identity, permissions, seller onboarding | PostgreSQL (write) + Dapper (read) | Hosts the gRPC permissions server every other service consumes; owns Keycloak admin integration |
 | `flash-sales.service-collector` | Clickstream / interaction event ingestion | Kafka → Data Lake | Decoupled from the transactional path entirely; feeds product analytics |
 | `flash-sales.seller-analytics` | Seller-facing analytics views over their launches | Cassandra (`SellerAnalyticsDb`) | Consumes launch analytics events from Kafka; its API serves the views sellers see |
 
-All the .NET services sit on a shared `FlashSales.Infrastructure` / `FlashSales.Application` / `FlashSales.Endpoints` building-blocks layer, plus per-module `Domain` / `Application` / `Infrastructure` / `Endpoints` / `Contracts` projects that keep each context's public contract isolated from its internals. The Go Waiting Room shares none of that code by design — it integrates only through the same contracts every other service sees: Keycloak-issued JWTs, the API Gateway, and Azure Service Bus integration events.
+All the services sit on a shared `FlashSales.Infrastructure` / `FlashSales.Application` / `FlashSales.Endpoints` building-blocks layer, plus per-module `Domain` / `Application` / `Infrastructure` / `Endpoints` / `Contracts` projects that keep each context's public contract isolated from its internals.
 
 ## Identity & Authorization
 
@@ -66,9 +65,9 @@ Order creation is coordinated by an explicit **orchestrated saga**, not a choreo
 
 Discount coupons live in their own bounded context rather than inside Orders. A coupon is either a **percentage** or a **fixed-amount** discount, carries a validity window and a usage limit, and moves through an explicit lifecycle (`Draft → Active → Paused / Expired / Canceled / Exhausted`), with each transition raised as a domain event. Redemptions are recorded per coupon so usage limits hold under concurrent buyers, and a release use case gives a coupon back when a later saga step fails. Orders consumes this synchronously over **gRPC**, mirroring the reserve/compensate shape already used for stock, and rollout is controlled by the `Coupons` flag in Azure App Configuration so the feature can be enabled for some customers and not others.
 
-## Waiting Room (Go)
+## Waiting Room
 
-`flash-sales.waiting-room` is the platform's fairness layer for high-demand launches, and the one service written in **Go** — a deliberate polyglot choice for a latency-sensitive, highly concurrent workload that has to absorb the burst of buyers hitting a launch at the same instant. Customers who join within the initial window are admitted in **randomized order** rather than raw arrival order, so people with a faster network path to the server don't get a structural advantage; the service also owns the queue behind payment, so that when a payment window expires the reservation can pass to the next customer in line. It has its own `WaitingRoomDb`, validates the same Keycloak JWTs as every .NET service, and communicates with the rest of the platform through Azure Service Bus integration events.
+`flash-sales.waiting-room` is the platform's fairness layer for high-demand launches, built to absorb the burst of buyers hitting a launch at the same instant. Customers who join within the initial window are admitted in **randomized order** rather than raw arrival order, so people with a faster network path to the server don't get a structural advantage; the service also owns the queue behind payment, so that when a payment window expires the reservation can pass to the next customer in line. It has its own `WaitingRoomDb`, validates Keycloak JWTs like every other service, and communicates with the rest of the platform through Azure Service Bus integration events.
 
 ## Payment Gateway
 
@@ -144,7 +143,7 @@ Then run any service from `src/Apps/APIs/FlashSales.<Name>.Api` — each is a st
 
 | Concern | Technology |
 |---|---|
-| Runtime | .NET 10, ASP.NET Core Minimal APIs; Go (Waiting Room) |
+| Runtime | .NET 10, ASP.NET Core Minimal APIs |
 | Write-model persistence | Entity Framework Core (Npgsql), Marten (event sourcing — Orders) |
 | Read-model persistence | Dapper, MongoDB (Orders projections), Cassandra (seller analytics views) |
 | Mediator / pipeline | MidR (commands, queries, notifications, pipeline behaviors) |
