@@ -3,6 +3,7 @@ using FlashSales.Application.FeatureFlags;
 using FlashSales.Domain.Results;
 using Microsoft.Extensions.Logging;
 using Modules.Coupons.Contracts;
+using Modules.Coupons.Contracts.Requests;
 using Modules.Launches.Contracts;
 using Modules.Orders.Application.Orders.Mappers;
 using Modules.Orders.Domain.Orders.Entities;
@@ -177,6 +178,11 @@ namespace Modules.Orders.Application.Orders.Sagas
                     logger.LogInformation("The discount coupon feature is disabled for the customer {CustomerId}", order.CustomerId);
                 }
             }
+
+            var redeem = await couponPublicApi.RedeemAsync(new RedeemRequest(
+                order.Id,
+                order.CustomerId,
+                ))
         }
 
         private Task<bool> CanApplyCouponAsync(CancellationToken cancellationToken)
