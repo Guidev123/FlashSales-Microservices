@@ -21,7 +21,7 @@ namespace Modules.Orders.Infrastructure.Services
             }, cancellationToken: cancellationToken)
             .ExecuteAsync("Coupons.Redeem", cancellationToken);
 
-            return result.Map(_ => new RedeemResponse());
+            return result.Map(response => new RedeemResponse(response.AdjustedOrderAmountCents));
         }
 
         public async Task<Result> ReleaseAsync(ReleaseRequest request, CancellationToken cancellationToken = default)

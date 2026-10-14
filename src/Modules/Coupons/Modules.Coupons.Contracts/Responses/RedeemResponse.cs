@@ -1,4 +1,6 @@
 ﻿namespace Modules.Coupons.Contracts.Responses
 {
-    public sealed record RedeemResponse();
+    public sealed record RedeemResponse(
+        decimal AdjustedOrderAmount
+        );
 }

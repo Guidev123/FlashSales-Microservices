@@ -32,6 +32,7 @@ namespace FlashSales.Infrastructure.Database
             catch (DbUpdateConcurrencyException)
             {
                 await RollbackAsync(cancellationToken);
+                context.ChangeTracker.Clear();
                 return CommitResult.ConcurrencyConflict();
             }
             catch (DbUpdateException ex)
@@ -64,6 +65,7 @@ namespace FlashSales.Infrastructure.Database
             catch (DbUpdateConcurrencyException)
             {
                 await RollbackAsync(cancellationToken);
+                context.ChangeTracker.Clear();
                 return CommitResult.ConcurrencyConflict();
             }
             catch (DbUpdateException ex)

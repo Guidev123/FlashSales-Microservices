@@ -23,7 +23,6 @@ namespace Modules.Launches.Infrastructure.Database.Repositories
         public Task<Launch?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return context.Launches
-                .AsNoTrackingWithIdentityResolution()
                 .Include(l => l.StockReservations)
                 .FirstOrDefaultAsync(l => l.Id == id, cancellationToken);
         }

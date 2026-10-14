@@ -29,7 +29,8 @@ namespace Modules.Orders.Application.Orders.Sagas
             Order order,
             string customerEmail,
             IReadOnlyCollection<CheckoutLineItem> items,
-            CancellationToken cancellationToken)
+            Guid? couponId = null,
+            CancellationToken cancellationToken = default)
         {
             using var scope = logger.BeginScope(new Dictionary<string, object>()
             {
@@ -40,7 +41,7 @@ namespace Modules.Orders.Application.Orders.Sagas
 
             return await CreateOrder(order, cancellationToken)
                 .Bind(saga => ReserveAsync(order, saga, cancellationToken)
-                    .Bind(() => CheckoutAsync(order, customerEmail, items, cancellationToken)
+                    .Bind(() => CheckoutAsync(order, customerEmail, items, couponId, cancellationToken)
                         .TapError(error => CompensateAsync(
                             saga,
                             order,
@@ -153,23 +154,31 @@ namespace Modules.Orders.Application.Orders.Sagas
             Order order,
             string customerEmail,
             IReadOnlyCollection<CheckoutLineItem> items,
-            CancellationToken cancellationToken)
+            Guid? couponId = null,
+            CancellationToken cancellationToken = default)
         {
+            var couponResult = await ApplyCouponAsync(order, couponId, cancellationToken);
+            if (couponResult.IsFailure) return Result.Failure<string>(couponResult.Error!);
+
+            var adjustedOrderAmount = couponResult.Value;
+
             var result = await paymentsPublicApi.InitiateCheckoutAsync(
                 PaymentMappers.MapToRequest(
-                    order.Id, order.OrderCode, order.TotalAmount,
+                    order.Id, order.OrderCode, adjustedOrderAmount,
                     order.CustomerId, customerEmail, items),
                 cancellationToken);
 
             return result.Map(checkout => checkout.CheckoutUrl);
         }
 
-        private async Task ApplyCouponAsync(
+        private async Task<Result<decimal>> ApplyCouponAsync(
             Order order,
-            OrderCreationSaga saga,
-            CancellationToken cancellationToken
+            Guid? couponId = null,
+            CancellationToken cancellationToken = default
             )
         {
+            if (!couponId.HasValue) return order.TotalAmount;
+
             var canApply = await CanApplyCouponAsync(cancellationToken);
             if (!canApply)
             {
@@ -179,16 +188,25 @@ namespace Modules.Orders.Application.Orders.Sagas
                 }
             }
 
-            var redeem = await couponPublicApi.RedeemAsync(new RedeemRequest(
+            var redeemResult = await couponPublicApi.RedeemAsync(new RedeemRequest(
                 order.Id,
                 order.CustomerId,
-                ))
+                couponId.Value,
+                order.TotalAmount
+                ), cancellationToken);
+
+            if (redeemResult.IsFailure)
+            {
+                logger.LogWarning("Something has failed to redeem coupon: {@Error}", redeemResult.Error);
+
+                return Result.Failure<decimal>(OrderErrors.RedeemCouponFailed);
+            }
+
+            return redeemResult.Value.AdjustedOrderAmount;
         }
 
         private Task<bool> CanApplyCouponAsync(CancellationToken cancellationToken)
-        {
-            return featureFlagService.IsEnabledAsync("Coupons", cancellationToken);
-        }
+            => featureFlagService.IsEnabledAsync("Coupons", cancellationToken);
 
         private async Task CompleteAsync(Order order, OrderCreationSaga saga, CancellationToken cancellationToken)
         {

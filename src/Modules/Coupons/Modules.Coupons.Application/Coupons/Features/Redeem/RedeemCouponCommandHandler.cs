@@ -9,18 +9,18 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
     internal sealed class RedeemCouponCommandHandler(
         ICouponRepository couponRepository,
         IUnitOfWork unitOfWork
-        ) : ICommandHandler<RedeemCouponCommand>
+        ) : ICommandHandler<RedeemCouponCommand, RedeemCouponResponse>
     {
         private const int MaxRetryAttempts = 3;
 
-        public async Task<Result> ExecuteAsync(RedeemCouponCommand request, CancellationToken cancellationToken = default)
+        public async Task<Result<RedeemCouponResponse>> ExecuteAsync(RedeemCouponCommand request, CancellationToken cancellationToken = default)
         {
             for (int i = 0; i < MaxRetryAttempts; i++)
             {
                 var coupon = await couponRepository.GetByIdAsync(request.CouponId, cancellationToken);
                 if (coupon is null)
                 {
-                    return Result.Success();
+                    return Result.Failure<RedeemCouponResponse>(CouponErrors.NotFound(request.CouponId));
                 }
 
                 var couponRedemptionResult = coupon.Redeem(
@@ -31,7 +31,7 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
 
                 if (couponRedemptionResult.IsFailure)
                 {
-                    return Result.Failure(couponRedemptionResult.Error!);
+                    return Result.Failure<RedeemCouponResponse>(couponRedemptionResult.Error!);
                 }
 
                 couponRepository.Update(coupon);
@@ -40,12 +40,14 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
 
                 if (saveResult.IsSuccess)
                 {
-                    return Result.Success();
+                    var adjustedAmount = couponRedemptionResult.Value - request.OrderAmount;
+
+                    return new RedeemCouponResponse(adjustedAmount);
                 }
 
                 if (saveResult.ErrorType != PersistenceErrors.ConcurrencyConflict)
                 {
-                    return Result.Failure(CouponErrors.SomethingHasFailedToRedeemCoupon);
+                    return Result.Failure<RedeemCouponResponse>(CouponErrors.SomethingHasFailedToRedeemCoupon);
                 }
 
                 if (i < MaxRetryAttempts - 1)
@@ -54,7 +56,7 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
                 }
             }
 
-            return Result.Failure(CouponErrors.InsufficientRedemptionsAvailable);
+            return Result.Failure<RedeemCouponResponse>(CouponErrors.InsufficientRedemptionsAvailable);
         }
     }
 }

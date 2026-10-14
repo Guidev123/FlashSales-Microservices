@@ -6,6 +6,7 @@ namespace Modules.Orders.Application.Orders.Features.Create
         Guid CustomerId,
         string CustomerEmail,
         Guid LaunchId,
-        int Quantity
+        int Quantity,
+        Guid? CouponId = null
         ) : ICommand<CreateOrderResponse>, ITransactionalLessCommand;
 }

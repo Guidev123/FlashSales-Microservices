@@ -51,5 +51,9 @@ namespace Modules.Orders.Domain.Orders.Errors
         public static readonly Error CheckoutFailed = Error.Problem(
             "Orders.CheckoutFailed",
             "Something has failed to start the checkout for this order");
+
+        public static readonly Error RedeemCouponFailed = Error.Problem(
+            "Orders.RedeemCouponFailed",
+            "Something has failed to redeem coupon for this order");
     }
 }

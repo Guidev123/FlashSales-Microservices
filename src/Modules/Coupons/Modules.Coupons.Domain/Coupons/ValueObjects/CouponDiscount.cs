@@ -32,8 +32,8 @@ namespace Modules.Coupons.Domain.Coupons.ValueObjects
                 ? orderAmount * (Value / 100m)
                 : Value;
 
-            if (MaxDiscountAmount is { } cap)
-                discount = Math.Min(discount, cap);
+            if (MaxDiscountAmount.HasValue)
+                discount = Math.Min(discount, MaxDiscountAmount.Value);
 
             return Math.Min(discount, orderAmount);
         }

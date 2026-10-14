@@ -16,7 +16,9 @@ message RedeemCouponRequest {
   int64 order_amount_cents = 4;
 }
 
-message RedeemCouponReply {}
+message RedeemCouponReply { 
+	int64 adjusted_order_amount_cents = 1;
+}
 
 message ReleaseCouponRequest { string coupon_id = 1; string order_id = 2; }
 

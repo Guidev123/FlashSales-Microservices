@@ -1,8 +1,11 @@
 using FlashSales.Endpoints.Endpoints;
 using FlashSales.Infrastructure;
+using FlashSales.Infrastructure.FeatureFlags;
 using Modules.Orders.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddFeatureFlags();
 
 builder.Services
     .AddCoreInfrastructure(builder.Configuration, OrdersModule.Assemblies)

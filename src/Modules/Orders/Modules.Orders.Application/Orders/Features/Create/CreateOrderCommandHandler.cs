@@ -58,6 +58,7 @@ namespace Modules.Orders.Application.Orders.Features.Create
                 order,
                 request.CustomerEmail,
                 [new CheckoutLineItem(launch.Title, request.Quantity, launch.DiscountedPrice)],
+                request.CouponId,
                 cancellationToken);
 
             if (result.IsFailure)

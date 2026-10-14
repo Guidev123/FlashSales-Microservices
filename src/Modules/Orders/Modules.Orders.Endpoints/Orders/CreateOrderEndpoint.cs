@@ -26,7 +26,8 @@ namespace Modules.Orders.Endpoints.Orders
                     claimsPrincipal.GetUserId(),
                     claimsPrincipal.GetEmail(),
                     request.LaunchId,
-                    request.Quantity
+                    request.Quantity,
+                    request.CouponId
                     );
 
                 var result = await sender.SendAsync(command, cancellationToken);
@@ -47,6 +48,10 @@ namespace Modules.Orders.Endpoints.Orders
               .ProducesProblem(StatusCodes.Status409Conflict);
         }
 
-        sealed record CreateOrderRequest(Guid LaunchId, int Quantity);
+        sealed record CreateOrderRequest(
+            Guid LaunchId,
+            int Quantity,
+            Guid? CouponId = null
+            );
     }
 }

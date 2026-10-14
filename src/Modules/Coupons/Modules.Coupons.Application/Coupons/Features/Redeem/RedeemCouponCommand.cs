@@ -7,5 +7,5 @@ namespace Modules.Coupons.Application.Coupons.Features.Redeem
         Guid CustomerId,
         Guid CouponId,
         decimal OrderAmount
-        ) : ICommand, ITransactionalLessCommand;
+        ) : ICommand<RedeemCouponResponse>, ITransactionalLessCommand;
 }

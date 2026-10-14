@@ -76,7 +76,7 @@ namespace Modules.Coupons.IntegrationTests.Abstractions
             await connection.OpenAsync();
 
             await using var cmd = new NpgsqlCommand("""
-                DELETE FROM coupons."CouponRedemption";
+                DELETE FROM coupons."CouponRedemptions";
                 DELETE FROM coupons."Coupons";
                 DELETE FROM coupons."OutboxMessageConsumers";
                 DELETE FROM coupons."OutboxMessages";
